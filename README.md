@@ -7,9 +7,12 @@ Platform edukasi literasi keuangan berbahasa Indonesia untuk siswa SMK dan masya
 - Delapan bab materi fondasi yang telah tersedia, delapan bab Jalur Literasi Keuangan dengan 64 materi, dan kurikulum pengayaan kelas 10–12 dengan 33 bab/66 materi.
 - Pencarian materi berdasarkan judul dan isi, filter jalur/kelas/bab/status, serta pengurutan.
 - Peta perjalanan belajar, materi rekomendasi, profil yang dapat diperbarui, dan halaman progres.
-- Misi belajar dan pencapaian yang dihitung dari aktivitas lokal; reward XP tidak berbasis waktu menjawab.
+- Layar penyelesaian materi dengan progres bab/jalur, XP dan pencapaian aktual, serta tautan langsung ke materi, bab, atau jenjang berikutnya. Penyelesaian baru tercatat setelah latihan materi dijawab benar; ringkasannya tetap dapat dibuka setelah halaman dimuat ulang.
+- Pusat misi harian/mingguan dan pencapaian berdasarkan aktivitas lokal, dengan reward tiap periode yang dibatasi agar tidak berulang karena refresh.
 - Kuis dengan 80 soal terstruktur (10 soal per bab), delapan simulasi interaktif (anggaran, inflasi, keputusan, target tabungan/dana cadangan, biaya pinjaman, portofolio virtual, deteksi penipuan, dan usaha virtual), review, serta pencapaian.
-- XP: +20 saat pertama kali menyelesaikan materi, +5 saat pertama kali menjawab latihan materi dengan benar, +5 untuk setiap soal bank yang dijawab benar pertama kali, +10 untuk kombinasi filter kuis atau jenis simulasi yang diselesaikan pertama kali, dan +15 untuk tantangan anggaran/keputusan berhasil pertama kali. Reward tidak berdasarkan kecepatan dan aktivitas yang sama tidak memberi XP berulang.
+- Finance Calculator Lab untuk bunga sederhana/majemuk, inflasi, target tabungan, dan anggaran; Financial Decision Challenge; serta simulator kehidupan finansial dengan uang virtual.
+- Personal Learning Intelligence merangkum materi selesai, hasil kuis per topik, dan rekomendasi dari aktivitas yang benar-benar tersimpan.
+- XP: +20 saat pertama kali menyelesaikan materi setelah latihan benar, +5 untuk latihan materi/soal bank benar pertama kali, +10 untuk kombinasi filter kuis atau jenis simulasi pertama, +15 untuk tantangan anggaran, skenario keputusan lama yang berhasil, dan penggunaan pertama simulator kehidupan, serta +10 per challenge keputusan baru. Misi memberi XP harian/mingguan satu kali per periode; refresh atau membuka ulang tidak mengulang hadiah.
 - Level dihitung dari total XP: Level 1 mulai 0 XP; batas berikutnya 100, 250, 450, 700, 1.000 XP, lalu bertambah 300 XP per level. Gelar level menyesuaikan perjalanan belajar.
 - Pencapaian terbuka berdasarkan materi selesai, skor kuis, tantangan anggaran, dan hari belajar berbeda yang tercatat.
 
