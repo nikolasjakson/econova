@@ -87,10 +87,8 @@
   let activeAudioNodes = [];
   let activeCuePriority = 0;
   let activeCueTimer = null;
+  let audioRequestId = 0;
   let audioErrorReported = false;
-  let narrationUtterance = null;
-  let narrationStatus = "idle";
-  let narrationRoute = null;
 
   function readStore(key, fallback) {
     try {
@@ -117,8 +115,7 @@
     const stored = readStore(AUDIO_SETTINGS_KEY, {});
     return {
       muted: stored && typeof stored.muted === "boolean" ? stored.muted : false,
-      effectVolume: stored && Number.isFinite(stored.effectVolume) ? Math.max(0, Math.min(1, stored.effectVolume)) : 0.2,
-      narrationEnabled: stored && typeof stored.narrationEnabled === "boolean" ? stored.narrationEnabled : true
+      effectVolume: stored && Number.isFinite(stored.effectVolume) ? Math.max(0, Math.min(1, stored.effectVolume)) : 0.2
     };
   }
 
@@ -137,34 +134,11 @@
     return typeof window.AudioContext === "function" || typeof window.webkitAudioContext === "function";
   }
 
-  function speechSynthesisSupported() {
-    return typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance === "function";
-  }
-
-  function findIndonesianVoice() {
-    if (!speechSynthesisSupported()) return null;
-    return window.speechSynthesis.getVoices().find(voice => /^id(?:-|$)/i.test(voice.lang)) || null;
-  }
-
   function audioSupportDescription() {
-    const effects = audioContextSupported() ? "Efek sintetis aktif setelah interaksi." : "Efek suara tidak didukung browser ini.";
-    const narration = !speechSynthesisSupported()
-      ? "Narasi tidak didukung browser ini."
-      : findIndonesianVoice() ? "Voice Bahasa Indonesia tersedia." : "Voice Bahasa Indonesia tidak tersedia.";
-    return `${effects} ${narration}`;
-  }
-
-  function updateNarrationControls() {
-    const supported = speechSynthesisSupported();
-    const hasVoice = Boolean(findIndonesianVoice());
-    const play = ROOT.querySelector("[data-audio-action='play']");
-    const pause = ROOT.querySelector("[data-audio-action='pause']");
-    const resume = ROOT.querySelector("[data-audio-action='resume']");
-    const stop = ROOT.querySelector("[data-audio-action='stop']");
-    if (play) play.disabled = !supported || !hasVoice || !audioSettings.narrationEnabled || audioSettings.muted;
-    if (pause) pause.disabled = !supported || narrationStatus !== "speaking";
-    if (resume) resume.disabled = !supported || narrationStatus !== "paused";
-    if (stop) stop.disabled = !supported || narrationStatus === "idle";
+    if (!audioContextSupported()) return "Efek suara tidak didukung browser ini.";
+    return audioSettings.muted
+      ? "Efek suara dimatikan."
+      : "Efek suara aktif setelah interaksi pertama.";
   }
 
   function reportAudioError(message, error) {
@@ -181,22 +155,30 @@
       navigation: { priority: 0, notes: [[560, 0, 0.05, "sine"]] },
       correct: { priority: 2, notes: [[523.25, 0, 0.12, "sine"], [659.25, 0.075, 0.15, "sine"]] },
       incorrect: { priority: 2, notes: [[220, 0, 0.14, "sine"], [196, 0.08, 0.16, "sine"]] },
-      level: { priority: 3, notes: [[440, 0, 0.14, "sine"], [554.37, 0.1, 0.15, "sine"], [659.25, 0.2, 0.22, "sine"]] },
-      complete: { priority: 2, notes: [[493.88, 0, 0.13, "sine"], [659.25, 0.1, 0.2, "sine"]] },
-      achievement: { priority: 4, notes: [[523.25, 0, 0.13, "sine"], [659.25, 0.1, 0.14, "sine"], [783.99, 0.2, 0.18, "sine"], [1046.5, 0.31, 0.24, "sine"]] }
+      xp: { priority: 1, notes: [[587.33, 0, 0.1, "sine"], [739.99, 0.08, 0.13, "sine"]] },
+      complete: { priority: 3, notes: [[493.88, 0, 0.13, "sine"], [659.25, 0.1, 0.2, "sine"]] },
+      path: { priority: 4, notes: [[440, 0, 0.14, "sine"], [554.37, 0.1, 0.15, "sine"], [659.25, 0.2, 0.22, "sine"]] },
+      level: { priority: 5, notes: [[440, 0, 0.14, "sine"], [554.37, 0.1, 0.15, "sine"], [659.25, 0.2, 0.22, "sine"]] },
+      achievement: { priority: 6, notes: [[523.25, 0, 0.13, "sine"], [659.25, 0.1, 0.14, "sine"], [783.99, 0.2, 0.18, "sine"], [1046.5, 0.31, 0.24, "sine"]] }
     };
     const cue = cues[name];
     if (!cue || cue.priority < activeCuePriority) return;
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!audioContext) audioContext = new AudioContextClass();
+      const requestId = ++audioRequestId;
+      activeCuePriority = cue.priority;
+      clearTimeout(activeCueTimer);
       const schedule = () => {
+        if (requestId !== audioRequestId) return;
+        if (audioSettings.muted || audioSettings.effectVolume <= 0 || !audioUnlocked || audioContext.state === "closed") {
+          activeCuePriority = 0;
+          return;
+        }
         activeAudioNodes.forEach(node => {
           try { node.stop(); } catch (error) { /* Already stopped. */ }
         });
         activeAudioNodes = [];
-        clearTimeout(activeCueTimer);
-        activeCuePriority = cue.priority;
         const now = audioContext.currentTime;
         cue.notes.forEach(([frequency, offset, duration, waveform]) => {
           const oscillator = audioContext.createOscillator();
@@ -218,96 +200,37 @@
           oscillator.stop(start + duration + 0.01);
           activeAudioNodes.push(oscillator);
         });
-        activeCueTimer = setTimeout(() => { activeCuePriority = 0; }, 700);
+        activeCueTimer = setTimeout(() => {
+          if (requestId === audioRequestId) activeCuePriority = 0;
+        }, 700);
       };
       if (audioContext.state === "suspended") {
-        audioContext.resume().then(schedule).catch(error => reportAudioError("Efek suara tidak dapat dimulai di browser ini.", error));
+        audioContext.resume().then(schedule).catch(error => {
+          if (requestId === audioRequestId) stopAudioCues();
+          reportAudioError("Efek suara tidak dapat dimulai di browser ini.", error);
+        });
       } else {
         schedule();
       }
     } catch (error) {
+      stopAudioCues();
       reportAudioError("Efek suara tidak tersedia di browser ini.", error);
     }
   }
 
-  function stopNarration() {
-    if (!speechSynthesisSupported()) return;
-    window.speechSynthesis.cancel();
-    narrationUtterance = null;
-    narrationStatus = "idle";
-    narrationRoute = null;
-    const status = ROOT.querySelector("[data-narration-status]");
-    if (status) status.textContent = "Narasi dihentikan.";
-    updateNarrationControls();
-  }
-
-  function startNarration() {
-    audioUnlocked = true;
-    if (audioSettings.muted) {
-      showToast("Narasi tidak dapat diputar saat semua audio dibisukan.", true);
-      return;
-    }
-    if (!audioSettings.narrationEnabled) {
-      showToast("Aktifkan narasi di pengaturan audio terlebih dahulu.", true);
-      return;
-    }
-    if (!speechSynthesisSupported()) {
-      reportAudioError("Browser ini tidak mendukung narasi suara.");
-      return;
-    }
-    const voice = findIndonesianVoice();
-    if (!voice) {
-      const status = ROOT.querySelector("[data-narration-status]");
-      if (status) status.textContent = "Voice Bahasa Indonesia tidak tersedia di browser ini.";
-      return;
-    }
-    const source = ROOT.querySelector("[data-narration-text]");
-    if (!source) return;
-    stopNarration();
-    try {
-      narrationUtterance = new SpeechSynthesisUtterance(source.dataset.narrationText);
-      narrationUtterance.lang = voice.lang || "id-ID";
-      narrationUtterance.voice = voice;
-      narrationUtterance.rate = 0.94;
-      narrationUtterance.pitch = 1;
-      narrationUtterance.volume = 1;
-      narrationUtterance.onstart = () => {
-        narrationStatus = "speaking";
-        narrationRoute = route();
-        const status = ROOT.querySelector("[data-narration-status]");
-        if (status) status.textContent = "Sedang membacakan materi.";
-        updateNarrationControls();
-      };
-      narrationUtterance.onend = () => {
-        narrationStatus = "idle";
-        narrationUtterance = null;
-        narrationRoute = null;
-        const status = ROOT.querySelector("[data-narration-status]");
-        if (status) status.textContent = "Narasi selesai.";
-        updateNarrationControls();
-      };
-      narrationUtterance.onerror = event => {
-        narrationStatus = "idle";
-        narrationUtterance = null;
-        narrationRoute = null;
-        if (event.error !== "canceled" && event.error !== "interrupted") {
-          reportAudioError("Narasi tidak dapat diputar.", event.error);
-        }
-        updateNarrationControls();
-      };
-      window.speechSynthesis.speak(narrationUtterance);
-      narrationStatus = "speaking";
-      narrationRoute = route();
-      updateNarrationControls();
-    } catch (error) {
-      narrationStatus = "idle";
-      narrationUtterance = null;
-      reportAudioError("Narasi tidak dapat diputar.", error);
-    }
+  function stopAudioCues() {
+    audioRequestId++;
+    activeCuePriority = 0;
+    clearTimeout(activeCueTimer);
+    activeCueTimer = null;
+    activeAudioNodes.forEach(node => {
+      try { node.stop(); } catch (error) { /* Already stopped. */ }
+    });
+    activeAudioNodes = [];
   }
 
   function renderAudioSettings() {
-    return `<details class="audio-settings"><summary>Audio</summary><div class="audio-settings-panel" aria-label="Pengaturan audio"><label class="audio-toggle"><input type="checkbox" data-audio-setting="muted" ${audioSettings.muted ? "checked" : ""}> Bisukan semua suara</label><label class="audio-range" for="audio-volume">Volume efek <span data-volume-value>${Math.round(audioSettings.effectVolume * 100)}%</span></label><input id="audio-volume" type="range" min="0" max="1" step="0.05" value="${audioSettings.effectVolume}" data-audio-setting="effectVolume"><label class="audio-toggle"><input type="checkbox" data-audio-setting="narrationEnabled" ${audioSettings.narrationEnabled ? "checked" : ""}> Izinkan narasi</label><p class="audio-support" role="status">${audioSupportDescription()}</p></div></details>`;
+    return `<details class="audio-settings"><summary>Suara</summary><div class="audio-settings-panel" aria-label="Pengaturan efek suara"><label class="audio-toggle"><input type="checkbox" data-audio-setting="enabled" ${audioSettings.muted ? "" : "checked"}> Efek suara aktif</label><label class="audio-range" for="audio-volume">Volume efek <span data-volume-value>${Math.round(audioSettings.effectVolume * 100)}%</span></label><input id="audio-volume" type="range" min="0" max="1" step="0.05" value="${audioSettings.effectVolume}" data-audio-setting="effectVolume" ${audioSettings.muted ? "disabled" : ""}><p class="audio-support" role="status">${audioSupportDescription()}</p></div></details>`;
   }
 
   function profile() {
@@ -389,18 +312,42 @@
     progress.schemaVersion = 2;
     progress.achievements = ACHIEVEMENTS.filter(achievement => achievement.check(progress)).map(achievement => achievement.id);
     const key = PROGRESS_PREFIX + active.id;
-    let previousAchievements = [];
+    let previous = null;
     try {
-      const previous = localStorage.getItem(key);
-      if (previous) {
-        const parsed = JSON.parse(previous);
-        if (parsed && Array.isArray(parsed.achievements)) previousAchievements = parsed.achievements;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) previous = parsed;
       }
     } catch (error) {
-      console.error("ECONOVA: pencapaian sebelumnya tidak dapat diperiksa.", error);
+      console.error("ECONOVA: progres sebelumnya tidak dapat diperiksa.", error);
     }
     const saved = writeStore(key, progress);
-    if (saved && progress.achievements.some(id => !previousAchievements.includes(id))) playAudioCue("achievement");
+    if (!saved) return false;
+
+    const previousAchievements = previous && Array.isArray(previous.achievements) ? previous.achievements : [];
+    const previousCompleted = previous && Array.isArray(previous.completed) ? previous.completed : [];
+    const previousXp = previous && Number.isFinite(previous.xp) ? previous.xp : 0;
+    const newAchievement = progress.achievements.some(id => !previousAchievements.includes(id));
+    const levelUp = levelInfo(progress.xp).level > levelInfo(previousXp).level;
+    const newLessonId = progress.completed.find(id => !previousCompleted.includes(id));
+    const lesson = newLessonId && allLessons().find(item => item.id === newLessonId);
+    const lessonPath = lesson && pathLessons(lesson.track);
+    const pathCompleted = Boolean(lessonPath && lessonPath.length &&
+      lessonPath.every(item => progress.completed.includes(item.id)) &&
+      !lessonPath.every(item => previousCompleted.includes(item.id)));
+    const latestScore = progress.quizScores[progress.quizScores.length - 1];
+    const previousScores = previous && Array.isArray(previous.quizScores) ? previous.quizScores : [];
+    const previousLatestScore = previousScores[previousScores.length - 1];
+    const quizCompleted = Boolean(latestScore && (!previousLatestScore ||
+      (latestScore.eventId && latestScore.eventId !== previousLatestScore.eventId) ||
+      latestScore.date !== previousLatestScore.date));
+
+    if (newAchievement) playAudioCue("achievement");
+    else if (levelUp) playAudioCue("level");
+    else if (pathCompleted) playAudioCue("path");
+    else if (newLessonId || quizCompleted) playAudioCue("complete");
+    else if (progress.xp > previousXp) playAudioCue("xp");
     return saved;
   }
   function levelInfo(xp) {
@@ -535,7 +482,6 @@
     toastTimer = setTimeout(() => element.classList.remove("show"), 3400);
   }
   function showLevelUp(level) {
-    playAudioCue("level");
     showToast(`Naik level ${level.level} · ${level.title}!`);
     const element = document.querySelector(".toast");
     if (element) {
@@ -742,10 +688,8 @@
     const lessonIndex = lessons.findIndex(item => item.id === id);
     const isDone = progress.completed.includes(id);
     const hasPassedPractice = progress.practiced.includes(id);
-    const narrationText = [lesson.title, lesson.opener, lesson.objective, lesson.concept, lesson.example, lesson.takeaway].filter(Boolean).join(". ");
     return shell(`<div class="page-wrap narrow"><a class="text-link small" href="#/chapter/${lesson.chapter.id}">← Kembali ke ${escapeHtml(lesson.chapter.title)}</a>
       <header class="lesson-hero"><span class="eyebrow">${lesson.track === "curriculum" ? `KELAS ${lesson.grade} · MATERI ${lessonIndex + 1} DARI ${lessons.length}` : `BAB ${lesson.chapter.number} · MATERI ${lessonIndex + 1} DARI ${lessons.length}`}</span><h1>${escapeHtml(lesson.title)}</h1><p class="lead" style="font-size:17px">${escapeHtml(lesson.opener)}</p>${lesson.objective ? `<p class="small muted"><strong>Tujuan:</strong> ${escapeHtml(lesson.objective)}</p>` : ""}</header>
-      <section class="audio-narration surface-soft" aria-label="Narasi materi"><div><strong>Dengarkan materi</strong><p class="small muted" data-narration-status role="status" aria-live="polite">${audioSettings.muted ? "Audio dibisukan di pengaturan." : findIndonesianVoice() ? "Narasi tersedia dalam Bahasa Indonesia." : "Voice Bahasa Indonesia tidak tersedia saat ini."}</p></div><div class="audio-narration-controls"><button class="button button-secondary" type="button" data-audio-action="play" data-narration-text="${escapeHtml(narrationText)}" ${!speechSynthesisSupported() || !findIndonesianVoice() || !audioSettings.narrationEnabled || audioSettings.muted ? "disabled" : ""}>Putar</button><button class="button button-quiet" type="button" data-audio-action="pause" disabled>Jeda</button><button class="button button-quiet" type="button" data-audio-action="resume" disabled>Lanjutkan</button><button class="button button-quiet" type="button" data-audio-action="stop" disabled>Hentikan</button></div></section>
       <article class="lesson-content">
         <section class="surface content-section"><h2>Konsep utama</h2><p>${escapeHtml(lesson.concept)}</p></section>
         <section class="surface content-section"><h2>Contoh sehari-hari</h2><p>${escapeHtml(lesson.example)}</p></section>
@@ -1101,7 +1045,8 @@
     const percent = quizState.answers.length ? Math.round(correct / quizState.answers.length * 100) : 0;
     progress.quizScores.push({
       correct, total: quizState.answers.length, percent, date: new Date().toISOString(),
-      chapter: quizState.filters.chapter, difficulty: quizState.filters.difficulty
+      chapter: quizState.filters.chapter, difficulty: quizState.filters.difficulty,
+      eventId: quizState.eventId || createEventId("quiz")
     });
     progress.quizScores = progress.quizScores.slice(-30);
     const topicTotals = new Map();
@@ -1377,7 +1322,6 @@
   }
   function render() {
     const current = route();
-    if (narrationStatus !== "idle" && (!current.startsWith("lesson/") || narrationRoute !== current)) stopNarration();
     const user = profile();
     if (current === "home" || current === "") {
       if (user && user.role === "student") { ROOT.innerHTML = dashboardView(); return; }
@@ -1411,34 +1355,6 @@
 
   ROOT.addEventListener("click", function (event) {
     audioUnlocked = true;
-    const audioButton = event.target.closest("[data-audio-action]");
-    if (audioButton) {
-      if (audioButton.dataset.audioAction === "play") startNarration();
-      else if (audioButton.dataset.audioAction === "pause" && speechSynthesisSupported()) {
-        try {
-          if (narrationUtterance && window.speechSynthesis.speaking) {
-            window.speechSynthesis.pause();
-            narrationStatus = "paused";
-            ROOT.querySelector("[data-narration-status]")?.replaceChildren("Narasi dijeda.");
-            updateNarrationControls();
-          }
-        } catch (error) {
-          reportAudioError("Narasi tidak dapat dijeda.", error);
-        }
-      } else if (audioButton.dataset.audioAction === "resume" && speechSynthesisSupported()) {
-        try {
-          if (narrationUtterance && window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-            narrationStatus = "speaking";
-            ROOT.querySelector("[data-narration-status]")?.replaceChildren("Narasi dilanjutkan.");
-            updateNarrationControls();
-          }
-        } catch (error) {
-          reportAudioError("Narasi tidak dapat dilanjutkan.", error);
-        }
-      } else if (audioButton.dataset.audioAction === "stop") stopNarration();
-      return;
-    }
     const tab = event.target.closest("[role='tab']");
     if (tab) {
       currentStudentTab = tab.id === "tab-student";
@@ -1582,7 +1498,6 @@
       if (missionRewards.length) showToast(`Misi selesai · +${missionRewards.reduce((sum, item) => sum + item.xp, 0)} XP`);
       else if (earned && levelInfo(progress.xp).level > beforeLevel) showLevelUp(levelInfo(progress.xp));
       else if (earned) showToast("Materi selesai · +20 XP");
-      playAudioCue("complete");
       go("completion/" + lessonId);
     } else if (action === "scenario-choice") {
       const selectedIndex = Number(button.dataset.index);
@@ -1695,7 +1610,6 @@
   ROOT.addEventListener("click", function (event) {
     const target = event.target.closest("button, a, summary");
     if (!target) return;
-    if (target.matches("[data-audio-action]")) return;
     const action = target.dataset.action;
     if (["practice-check", "quiz-check", "complete-lesson"].includes(action)) return;
     playAudioCue(target.matches("a[href^='#/']") ? "navigation" : "click");
@@ -1703,20 +1617,14 @@
 
   ROOT.addEventListener("change", function (event) {
     const audioSetting = event.target.dataset.audioSetting;
-    if (audioSetting === "muted" || audioSetting === "narrationEnabled") {
-      audioSettings[audioSetting] = event.target.checked;
+    if (audioSetting === "enabled") {
+      audioSettings.muted = !event.target.checked;
       saveAudioSettings();
-      if (audioSetting === "muted" && audioSettings.muted) stopNarration();
-      if (audioSetting === "narrationEnabled" && !audioSettings.narrationEnabled) stopNarration();
-      const status = ROOT.querySelector("[data-narration-status]");
-      if (status) status.textContent = audioSettings.muted
-        ? "Audio dibisukan di pengaturan."
-        : !audioSettings.narrationEnabled
-          ? "Narasi dinonaktifkan di pengaturan."
-          : findIndonesianVoice() ? "Narasi tersedia dalam Bahasa Indonesia." : "Voice Bahasa Indonesia tidak tersedia saat ini.";
+      if (audioSettings.muted) stopAudioCues();
+      const volume = ROOT.querySelector("[data-audio-setting='effectVolume']");
+      if (volume) volume.disabled = audioSettings.muted;
       const support = ROOT.querySelector(".audio-support");
       if (support) support.textContent = audioSupportDescription();
-      updateNarrationControls();
       return;
     }
     if (event.target.matches("[data-action='scenario-select']")) {
@@ -1764,20 +1672,6 @@
       form.querySelector("[data-live]").textContent = "Isi angka untuk melihat perkiraan sisa uang.";
     }
   });
-
-  if (speechSynthesisSupported() && typeof window.speechSynthesis.addEventListener === "function") {
-    window.speechSynthesis.addEventListener("voiceschanged", function () {
-      const status = ROOT.querySelector("[data-narration-status]");
-      if (status && narrationStatus === "idle" && audioSettings.narrationEnabled && !audioSettings.muted) {
-        status.textContent = findIndonesianVoice()
-          ? "Narasi tersedia dalam Bahasa Indonesia."
-          : "Voice Bahasa Indonesia tidak tersedia saat ini.";
-      }
-      const support = ROOT.querySelector(".audio-support");
-      if (support) support.textContent = audioSupportDescription();
-      updateNarrationControls();
-    });
-  }
 
   function updateQuizTopicOptions() {
     const form = document.getElementById("quiz-settings");

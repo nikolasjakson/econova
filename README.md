@@ -15,6 +15,8 @@ Platform edukasi literasi keuangan berbahasa Indonesia untuk siswa SMK dan masya
 - XP: +20 saat pertama kali menyelesaikan materi setelah latihan benar, +5 untuk latihan materi/soal bank benar pertama kali, +10 untuk kombinasi filter kuis atau jenis simulasi pertama, +15 untuk tantangan anggaran, skenario keputusan lama yang berhasil, dan penggunaan pertama simulator kehidupan, serta +10 per challenge keputusan baru. Misi memberi XP harian/mingguan satu kali per periode; refresh atau membuka ulang tidak mengulang hadiah.
 - Level dihitung dari total XP: Level 1 mulai 0 XP; batas berikutnya 100, 250, 450, 700, 1.000 XP, lalu bertambah 300 XP per level. Gelar level menyesuaikan perjalanan belajar.
 - Pencapaian terbuka berdasarkan materi selesai, skor kuis, tantangan anggaran, dan hari belajar berbeda yang tercatat.
+- Antarmuka memakai tema ECONOVA dark fintech dengan token warna cyan dan violet, komponen konsisten, navigasi responsif, fokus keyboard yang terlihat, serta dukungan reduced motion.
+- Efek suara interaktif untuk jawaban kuis, progres, pencapaian, level, dan tindakan penting; kontrol aktif/nonaktif serta volume tersedia di menu Suara dan preferensinya tersimpan di browser. Efek dibuat lokal dengan Web Audio API setelah interaksi pengguna; materi tidak dibacakan otomatis.
 
 ## Menjalankan secara lokal
 
