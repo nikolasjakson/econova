@@ -545,6 +545,18 @@
   function nextLesson(progress) {
     return allLessons().find(lesson => !progress.completed.includes(lesson.id)) || null;
   }
+  function learningStatus(lesson, progress) {
+    if (progress.completed.includes(lesson.id)) return { className: "is-done", label: "Selesai" };
+    if (progress.practiced.includes(lesson.id) || progress.reviewLessons[lesson.id]) {
+      return { className: "is-in-progress", label: "Sedang dipelajari" };
+    }
+    return { className: "is-not-started", label: "Belum dimulai" };
+  }
+  function recommendedLesson(lessons, progress) {
+    return lessons.find(lesson => !progress.completed.includes(lesson.id) &&
+      (progress.practiced.includes(lesson.id) || progress.reviewLessons[lesson.id])) ||
+      lessons.find(lesson => !progress.completed.includes(lesson.id)) || null;
+  }
   function progressPercent(progress) {
     return Math.round((progress.completed.length / allLessons().length) * 100);
   }
@@ -554,36 +566,61 @@
   function shell(content, active) {
     const user = profile();
     const nav = user && user.role === "student"
-      ? `<nav class="topbar-nav" aria-label="Navigasi utama">
-          <a href="#/dashboard" ${active === "dashboard" ? 'aria-current="page"' : ""}>Beranda</a>
-          <a href="#/learn" ${active === "learn" || active === "lesson" || active === "curriculum" || active === "literacy" || active === "map" ? 'aria-current="page"' : ""}>Belajar</a>
-          <a href="#/simulations" ${active === "simulations" ? 'aria-current="page"' : ""}>Simulasi</a>
-          <a href="#/quiz" ${active === "quiz" ? 'aria-current="page"' : ""}>Kuis</a>
-          <a href="#/progress" ${active === "progress" ? 'aria-current="page"' : ""}>Progres</a>
-          <a href="#/map" ${active === "map" ? 'aria-current="page"' : ""}>Peta</a>
-          <details class="nav-more"><summary>Menu</summary><div class="nav-more-menu"><a href="#/finance-lab">Finance Calculator Lab</a><a href="#/challenges">Tantangan keputusan</a><a href="#/life-simulator">Simulator kehidupan</a><a href="#/insights">Insight belajar</a><a href="#/review">Ulangi materi</a><a href="#/achievements">Misi & pencapaian</a><a href="#/profile">Profil & pengaturan</a></div></details>
-        </nav>`
+      ? `<aside class="econova-sidebar${active === "dashboard" ? " dashboard-sidebar" : ""}" aria-label="Navigasi aplikasi">
+          ${active === "dashboard" ? `<a class="dashboard-sidebar-brand" href="#/dashboard" aria-label="ECONOVA, beranda"><img src="assets/images/econova-mark.png" alt=""><span>ECONOVA<small>FINANCIAL LITERACY</small></span></a>` : ""}
+          <span class="econova-sidebar-label">MENU UTAMA</span>
+          <nav class="nav nav-pills flex-column econova-primary-nav" aria-label="Navigasi utama">
+            <a class="nav-link econova-nav-link primary-nav-link" href="#/dashboard" ${active === "dashboard" ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10 8.5-7 8.5 7v10.5h-6v-7h-5v7h-6z"/></svg><span>Beranda</span></a>
+            <a class="nav-link econova-nav-link primary-nav-link" href="#/learn" ${["learn", "lesson", "curriculum", "literacy", "map"].includes(active) ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21zM4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8M8 10h6"/></svg><span>Belajar</span></a>
+            <a class="nav-link econova-nav-link primary-nav-link" href="#/quiz" ${active === "quiz" ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v12H9l-4 3zM8 9h.01M12 9h.01M16 9h.01M8 13h8"/></svg><span>Arena</span></a>
+            <a class="nav-link econova-nav-link primary-nav-link" href="#/insights" ${["insights", "progress"].includes(active) ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6.5 16v-4M11 16V6M15.5 16V9M20 16v-7"/></svg><span>Laporan</span></a>
+            <a class="nav-link econova-nav-link primary-nav-link" href="#/profile" ${active === "profile" ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span>Profil</span></a>
+          </nav>
+          ${active === "dashboard" ? `<div class="dashboard-sidebar-note"><span aria-hidden="true">↗</span><strong>Pahami uang. Pilih dengan sadar.</strong><small>Belajar sedikit demi sedikit, sesuai ritmemu.</small></div>` : ""}
+        </aside>`
       : "";
     const actions = user
-      ? `<div class="topbar-actions">${renderAudioSettings()}<span class="small muted">${escapeHtml(user.name || "Admin demo")}</span><button class="button button-quiet" data-action="logout">Keluar</button></div>`
+      ? `<div class="topbar-actions econova-header-actions">${user.role === "student" ? `<details class="nav-more econova-explore"><summary>Jelajah</summary><div class="nav-more-menu"><a href="#/simulations">Simulasi keuangan</a><a href="#/map">Peta belajar</a><a href="#/challenges">Praktik keputusan</a><a href="#/finance-lab">Finance Calculator Lab</a><a href="#/life-simulator">Simulator kehidupan</a><a href="#/progress">Progres belajar</a><a href="#/review">Ulangi materi</a><a href="#/achievements">Misi & pencapaian</a></div></details>` : ""}${renderAudioSettings()}<span class="small muted">${escapeHtml(user.name || "Admin demo")}</span><button class="button button-quiet" data-action="logout">Keluar</button></div>`
       : `<div class="topbar-actions">${renderAudioSettings()}<a class="button button-quiet" href="#/home#login">Masuk</a></div>`;
-    return `<div class="app-shell"><header class="topbar"><div class="topbar-inner">${brand()}${nav}${actions}</div></header><main id="main" class="page-scene scene-${active || "default"}">${content}</main><footer class="footer"><div class="footer-inner"><span>ECONOVA · Belajar keuangan, mulai dari hidupmu.</span><span>Materi edukasi, bukan saran investasi. Data progres tersimpan lokal di browser.</span></div></footer></div>`;
+    return `<div class="app-shell econova-shell${user && user.role === "student" ? " has-primary-nav" : ""}${active === "dashboard" ? " dashboard-shell" : ""}"><header class="topbar econova-header"><div class="topbar-inner econova-header-inner">${brand()}${actions}</div></header>${nav}<main id="main" class="page-scene scene-${active || "default"}">${content}</main><footer class="footer"><div class="footer-inner"><span>ECONOVA · Belajar keuangan, mulai dari hidupmu.</span><span>Materi edukasi, bukan saran investasi. Data progres tersimpan lokal di browser.</span></div></footer></div>`;
   }
   function loginView() {
     return `<div class="landing">
       <div class="page-wrap">
         <section class="hero" aria-labelledby="hero-title">
-          <div><span class="eyebrow">Pahami uang. Pilih dengan sadar.</span><h1 id="hero-title">Keuangan nyata,<br><span>belajar lebih bermakna.</span></h1>
-            <p class="lead">Belajar mengelola uang lewat cerita sehari-hari, latihan singkat, dan simulasi yang aman untuk dicoba.</p>
+          <div>${brand()}<span class="eyebrow">Pahami uang. Pilih dengan sadar.</span><h1 id="hero-title">Keuangan nyata,<br><span>belajar lebih bermakna.</span></h1>
+            <p class="lead">Bangun kebiasaan mengelola uang dan membuat keputusan keuangan dengan lebih percaya diri.</p>
             <div class="hero-actions"><a class="button button-primary" href="#login">Mulai belajar <span aria-hidden="true">→</span></a><a class="button button-secondary" href="#tentang">Kenali ECONOVA</a></div>
-            <p class="hero-note">Gratis · Tanpa email · Progres disimpan di browser ini</p>
+            <p class="hero-note">Gratis · Tanpa email · Progres tersimpan di browser ini</p>
           </div>
-          <div class="orbit-art" aria-hidden="true"><span class="orbit"></span><span class="orbit two"></span><span class="orbit-dot"></span><span class="orbit-dot two"></span><span class="orbit-core"><span class="orbit-nucleus"></span></span></div>
+          <div class="orbit-art" aria-hidden="true">
+            <svg class="login-finance-art" viewBox="0 0 440 340" focusable="false">
+              <ellipse cx="227" cy="271" rx="192" ry="27" fill="#65A9E8" fill-opacity=".18"/>
+              <circle cx="244" cy="147" r="112" fill="#FFFFFF" fill-opacity=".48" stroke="#65A9E8" stroke-opacity=".38" stroke-width="3"/>
+              <path d="M142 169a104 104 0 0 1 173-72" fill="none" stroke="#65A9E8" stroke-linecap="round" stroke-width="5"/>
+              <path d="m295 83 23 10-20 13" fill="none" stroke="#111111" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+              <rect x="194" y="146" width="31" height="75" rx="7" fill="#65A9E8"/>
+              <rect x="236" y="121" width="31" height="100" rx="7" fill="#65A9E8" fill-opacity=".84"/>
+              <rect x="278" y="91" width="31" height="130" rx="7" fill="#65A9E8" fill-opacity=".72"/>
+              <path d="m188 152 58-38 34 8 54-66 26 5" fill="none" stroke="#111111" stroke-linecap="round" stroke-linejoin="round" stroke-width="9"/>
+              <path d="m344 47 20 12-4 23" fill="none" stroke="#111111" stroke-linecap="round" stroke-linejoin="round" stroke-width="9"/>
+              <path d="M77 256h276v25H77z" fill="#111111"/>
+              <path d="M65 225h300v33H65z" fill="#FFFFFF" stroke="#111111" stroke-opacity=".2" stroke-width="2"/>
+              <path d="M75 217h280v16H75z" fill="#65A9E8"/>
+              <path d="M91 190h248v29H91z" fill="#FFFFFF" stroke="#111111" stroke-opacity=".2" stroke-width="2"/>
+              <path d="M104 183h219v14H104z" fill="#FFD700"/>
+              <circle cx="111" cy="157" r="48" fill="#FFD700" stroke="#111111" stroke-width="3"/>
+              <circle cx="111" cy="157" r="38" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+              <text x="111" y="167" fill="#111111" font-family="Inter, sans-serif" font-size="32" font-weight="700" text-anchor="middle">Rp</text>
+              <path d="m366 182 12 12 12-12m-12-52v63" fill="none" stroke="#FFD700" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+              <path d="m111 82 5 11 11 4-11 5-5 11-5-11-11-5 11-4zM365 119l4 9 9 4-9 4-4 9-4-9-9-4 9-4z" fill="#FFD700"/>
+            </svg>
+          </div>
         </section>
         <section class="feature-strip" id="tentang" aria-label="Cara belajar"><div class="feature-item"><span class="feature-symbol">↗</span><span>Materi dekat dengan keseharian</span></div><div class="feature-item"><span class="feature-symbol">⌁</span><span>Simulasi tanpa transaksi nyata</span></div><div class="feature-item"><span class="feature-symbol">◇</span><span>Belajar sesuai ritmemu</span></div></section>
         <section class="login-section" id="login" aria-labelledby="login-heading">
-          <div class="login-intro"><span class="eyebrow">Mulai dari sini</span><h2 id="login-heading">Ruang belajar<br>untuk semua.</h2><p class="muted">Pilih masuk sebagai siswa untuk menyimpan progres belajar lokal, atau buka dashboard admin demo untuk melihat contoh pengelolaan materi.</p></div>
           <div class="surface login-card">
+            <div class="login-intro"><span class="eyebrow">MULAI DARI SINI</span><h2 id="login-heading">Selamat datang di ECONOVA.</h2><p class="muted">Pilih Siswa untuk menyimpan progres belajar secara lokal, atau lihat pratinjau Admin demo.</p></div>
             <div class="tab-list" role="tablist" aria-label="Jenis akun">
               <button class="tab-button" role="tab" id="tab-student" aria-controls="panel-student" aria-selected="${currentStudentTab}">Siswa</button>
               <button class="tab-button" role="tab" id="tab-admin" aria-controls="panel-admin" aria-selected="${!currentStudentTab}">Admin demo</button>
@@ -613,84 +650,346 @@
     const level = levelInfo(progress.xp);
     const latestScore = progress.quizScores[progress.quizScores.length - 1];
     const latestActivity = progress.activities[progress.activities.length - 1];
-    const recentAchievement = ACHIEVEMENTS.filter(item => item.check(progress)).slice(-1)[0];
     const isNew = progress.completed.length === 0 && progress.quizScores.length === 0 && !latestActivity;
-    const streak = currentStreak(progress);
-    return shell(`<div class="page-wrap">
-      <section class="welcome-panel surface"><div class="welcome-copy"><span class="eyebrow">Halo, ${escapeHtml(user.name)}</span><h1>${isNew ? "Mulai dari satu langkah kecil." : next ? "Selangkah lebih paham." : "Seluruh materi selesai."}</h1><p>${isNew ? "Belum ada aktivitas belajar yang tercatat. Mulai dengan materi pendek dan bangun ritmemu sendiri." : next ? "Belajar keuangan tidak harus sekaligus. Lanjutkan satu materi kecil, lalu gunakan pengetahuan itu untuk keputusan sehari-hari." : "Kamu telah menyelesaikan semua materi yang tersedia. Jelajahi jalur lain atau ulangi materi sesuai kebutuhan."}<br>${!isNew && latestActivity ? `<span class="small">Aktivitas terakhir: ${escapeHtml(latestActivity.text)} · ${new Date(latestActivity.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</span>` : ""}</p><a class="button button-primary" href="${next ? `#/lesson/${next.id}` : "#/learn"}">${isNew ? "Mulai materi pertama" : next ? "Lanjutkan belajar" : "Jelajahi Learning Path"} <span aria-hidden="true">→</span></a>${next ? `<p class="small muted" style="margin:15px 0 0">${escapeHtml(next.chapter.title)} · ${escapeHtml(next.title)}</p>` : ""}</div><div class="energy-core" aria-hidden="true"><span class="energy-ring energy-ring--outer"></span><span class="energy-ring energy-ring--inner"></span><span class="energy-ring energy-ring--orbit"></span><span class="energy-orb"><span class="energy-nucleus"></span></span><span class="energy-node energy-node--one"></span><span class="energy-node energy-node--two"></span><span class="energy-node energy-node--three"></span></div></section>
-      <section class="level-panel surface-soft" aria-label="Level dan pengalaman"><div class="split"><div><span class="eyebrow">Level ${level.level} · ${escapeHtml(level.title)}</span><p class="muted small" style="margin:5px 0 0">${progress.xp} XP · ${level.remaining} XP menuju level berikutnya</p></div><strong class="level-number">${level.level}</strong></div><div class="lesson-progress" role="progressbar" aria-label="Progres level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${level.progress}"><span style="width:${level.progress}%"></span></div><div class="level-foot"><span>${level.progress}% ke level berikutnya</span><span>${progress.completed.length}/${allLessons().length} materi selesai · ${streak ? streak + " hari beruntun" : "mulai ritme belajarmu"}</span></div></section>
-      <section class="dashboard-insights" aria-label="Ringkasan aktivitas"><div><span class="eyebrow">Kuis terakhir</span><p>${latestScore ? `${latestScore.correct}/${latestScore.total} benar · ${latestScore.percent}%` : "Belum ada hasil kuis. Coba latihan tanpa tekanan."}</p></div><div><span class="eyebrow">Pencapaian</span><p>${recentAchievement ? `${escapeHtml(recentAchievement.name)} terbuka` : "Pencapaian pertamamu menunggu."}</p></div><div><span class="eyebrow">Perlu diulang</span><p>${Object.keys(progress.reviewQuestions).length + Object.keys(progress.reviewLessons).length ? `${Object.keys(progress.reviewQuestions).length + Object.keys(progress.reviewLessons).length} latihan untuk ditinjau` : "Belum ada soal yang ditandai."}</p></div></section>
-      <div class="section-heading"><div><span class="eyebrow">Lanjutkan perjalanan</span><h2>Belajar lewat praktik.</h2></div></div>
-      <section class="quick-links" aria-label="Akses belajar"><a class="surface quick-link spotlight-surface" href="#/learn"><span class="quick-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Z"></path><path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8M8 10h6"></path></svg></span><h3>Pusat belajar</h3><p>Jalur literasi, kurikulum, dan materi fondasi.</p></a><a class="surface quick-link spotlight-surface" href="#/simulations"><span class="quick-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6"></path><path d="M16 7h3v3"></path></svg></span><h3>Laboratorium simulasi</h3><p>Delapan latihan interaktif tanpa transaksi sungguhan.</p></a><a class="surface quick-link spotlight-surface" href="#/quiz"><span class="quick-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4.5h14v12H9l-4 3v-15Z"></path><path d="M8.5 9h.01M12 9h.01M15.5 9h.01M8 13h8"></path></svg></span><h3>Arena kuis</h3><p>${QUESTION_BANK.length} soal, tanpa hitung mundur.</p></a></section>
-      <p class="notice" style="margin-top:20px">XP dan progres adalah motivasi belajar lokal di browser, bukan reward yang aman terhadap manipulasi dan tidak tersinkron antarperangkat.</p>
+    const achievements = ACHIEVEMENTS.map(item => ({ item, unlocked: item.check(progress) }));
+    const unlockedCount = achievements.filter(item => item.unlocked).length;
+    const lessonTotal = allLessons().length;
+    const chapterLessonsList = next ? chapterLessons(next.chapter) : [];
+    const chapterCompleted = chapterLessonsList.filter(lesson => progress.completed.includes(lesson.id)).length;
+    const chapterProgress = chapterLessonsList.length
+      ? Math.round(chapterCompleted / chapterLessonsList.length * 100)
+      : 0;
+    const reviewItems = [];
+
+    Object.entries(progress.reviewQuestions).forEach(([id, record]) => {
+      const question = QUESTION_BANK.find(item => item.id === id);
+      if (question) {
+        reviewItems.push({
+          kind: "question",
+          id,
+          title: question.question,
+          detail: `${chapterTitle(question.chapter)} · ${question.topic}`,
+          count: record.count,
+          date: record.lastDate
+        });
+      }
+    });
+    Object.entries(progress.reviewLessons).forEach(([id, record]) => {
+      const lesson = allLessons().find(item => item.id === id);
+      if (lesson) {
+        reviewItems.push({
+          kind: "lesson",
+          id,
+          title: lesson.title,
+          detail: `${lesson.chapter.title} · Latihan materi`,
+          count: record.count,
+          date: record.lastDate
+        });
+      }
+    });
+    reviewItems.sort((first, second) => Date.parse(second.date) - Date.parse(first.date));
+    const review = reviewItems[0];
+    const latestQuizDate = latestScore
+      ? new Date(latestScore.date).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+      : "";
+    const reviewAction = review && review.kind === "question"
+      ? `<button class="button button-secondary" data-action="review-question" data-id="${escapeHtml(review.id)}">Ulangi soal</button>`
+      : review
+        ? `<a class="button button-secondary" href="#/lesson/${escapeHtml(review.id)}">Buka materi</a>`
+        : `<a class="button button-secondary" href="#/quiz">Mulai latihan</a>`;
+
+    return shell(`<div class="page-wrap dashboard-page">
+      <section class="welcome-panel surface dashboard-hero" aria-labelledby="dashboard-title">
+        <div class="welcome-copy">
+          <span class="eyebrow">Halo, ${escapeHtml(user.name)}</span>
+          <h1 id="dashboard-title">Selangkah<br><span>lebih paham.</span></h1>
+          <p class="hero-description">${isNew
+            ? "Mulai dari satu materi singkat, lalu bangun kebiasaan mengambil keputusan keuangan dengan lebih percaya diri."
+            : next
+              ? "Bangun kebiasaan mengambil keputusan keuangan dengan lebih percaya diri—satu langkah kecil setiap kali."
+              : "Kamu telah menuntaskan materi yang tersedia. Tinjau kembali konsep penting atau jelajahi jalur belajar lain sesuai kebutuhan."}
+            ${!isNew && latestActivity ? `<span class="hero-activity">Aktivitas terakhir: ${escapeHtml(latestActivity.text)} · ${new Date(latestActivity.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</span>` : ""}
+          </p>
+          <a class="button button-primary hero-cta" href="${next ? `#/lesson/${next.id}` : "#/learn"}">${next ? "Lanjutkan Belajar" : "Jelajahi Materi"} <span aria-hidden="true">→</span></a>
+        </div>
+        <svg class="dashboard-illustration" viewBox="0 0 420 280" aria-hidden="true" focusable="false">
+          <path d="M24 226c55-33 101-26 157-8 51 16 101 12 215-40v80H24z" fill="#FFFFFF" fill-opacity=".34"/>
+          <rect x="204" y="34" width="157" height="130" rx="18" fill="#FFFFFF" fill-opacity=".82" stroke="#111111" stroke-opacity=".12" stroke-width="2"/>
+          <path d="M227 139V111h22v28m14 0V87h22v52m14 0V66h22v73m14 0V48h22v91" fill="#65A9E8"/>
+          <path d="m225 96 40-20 27 9 44-39 24-5" fill="none" stroke="#111111" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+          <path d="m345 35 17 4-5 18" fill="none" stroke="#111111" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+          <rect x="87" y="207" width="269" height="26" rx="8" fill="#111111"/>
+          <rect x="74" y="182" width="281" height="29" rx="9" fill="#FFFFFF" stroke="#111111" stroke-opacity=".2" stroke-width="2"/>
+          <rect x="102" y="176" width="252" height="18" rx="7" fill="#65A9E8"/>
+          <rect x="117" y="150" width="217" height="25" rx="7" fill="#FFFFFF" stroke="#111111" stroke-opacity=".2" stroke-width="2"/>
+          <rect x="117" y="150" width="18" height="25" rx="5" fill="#FFD700"/>
+          <circle cx="106" cy="126" r="41" fill="#FFD700" stroke="#111111" stroke-width="3"/>
+          <circle cx="106" cy="126" r="32" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+          <text x="106" y="135" fill="#111111" font-family="Inter, sans-serif" font-size="27" font-weight="700" text-anchor="middle">Rp</text>
+          <path d="m376 189 15 15 15-15m-15-57v71" fill="none" stroke="#FFD700" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+          <path d="m377 106 5 11 11 4-11 5-5 11-4-11-11-5 11-4z" fill="#FFD700"/>
+          <path d="m47 86 4 9 9 4-9 4-4 9-4-9-9-4 9-4z" fill="#FFFFFF"/>
+        </svg>
+      </section>
+
+      <section class="dashboard-progress surface" aria-label="Ringkasan progres">
+        <div class="dashboard-level-ring" style="--level-progress:${level.progress}%">
+          <div><span>LEVEL</span><strong>${level.level}</strong></div>
+        </div>
+        <div class="dashboard-progress-main">
+          <div class="dashboard-progress-heading">
+            <div><span class="eyebrow">${escapeHtml(level.title)}</span><strong>${progress.xp} XP</strong></div>
+            <span class="dashboard-next-xp">${level.remaining} XP menuju level berikutnya</span>
+          </div>
+          <div class="lesson-progress" role="progressbar" aria-label="Progres menuju level berikutnya" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${level.progress}"><span style="width:${level.progress}%"></span></div>
+          <span class="dashboard-progress-caption">${level.progress}% menuju level berikutnya</span>
+        </div>
+        <div class="dashboard-progress-stat"><span>Materi selesai</span><strong>${progress.completed.length}<small> / ${lessonTotal}</small></strong></div>
+        <div class="dashboard-progress-stat"><span>Pencapaian terbuka</span><strong>${unlockedCount}<small> / ${achievements.length}</small></strong></div>
+      </section>
+
+      <section class="dashboard-content-grid" aria-label="Aktivitas belajar">
+        <section class="dashboard-card dashboard-learning surface" aria-labelledby="dashboard-learning-title">
+          <div class="dashboard-card-heading">
+            <div><span class="eyebrow">LANGKAH BERIKUTNYA</span><h2 id="dashboard-learning-title">Lanjutkan Belajar</h2></div>
+            <a class="text-link small" href="#/learn">Lihat Semua <span aria-hidden="true">→</span></a>
+          </div>
+          ${next ? `<article class="dashboard-lesson-card spotlight-surface">
+            <svg class="dashboard-lesson-art" viewBox="0 0 120 100" aria-hidden="true" focusable="false">
+              <rect x="12" y="13" width="96" height="72" rx="13" fill="#FFFFFF"/>
+              <path d="M28 66V51h13v15m8 0V40h13v26m8 0V29h13v37m8 0V21h13v45" fill="#65A9E8"/>
+              <path d="m29 43 20-10 15 5 22-18 17-3" fill="none" stroke="#111111" stroke-linecap="round" stroke-width="3"/>
+              <rect x="25" y="76" width="68" height="9" rx="4" fill="#FFD700"/>
+            </svg>
+            <div class="dashboard-lesson-copy">
+              <span class="dashboard-lesson-kicker">${escapeHtml(next.chapter.title)}</span>
+              <h3>${escapeHtml(next.title)}</h3>
+              <p>${escapeHtml(learningPathName(next))}</p>
+              <div class="dashboard-chapter-progress">
+                <div><span>Progres bab</span><strong>${chapterProgress}%</strong></div>
+                <div class="dashboard-mini-progress" role="progressbar" aria-label="Progres bab ${escapeHtml(next.chapter.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${chapterProgress}"><span style="width:${chapterProgress}%"></span></div>
+              </div>
+            </div>
+            <a class="button button-primary dashboard-lesson-cta" href="#/lesson/${next.id}">Lanjutkan <span aria-hidden="true">→</span></a>
+          </article>` : `<div class="dashboard-empty-state"><strong>Semua materi telah selesai.</strong><span>Pilih jalur lain atau buka kembali materi yang ingin kamu tinjau.</span><a class="button button-secondary" href="#/learn">Jelajahi Learning Path</a></div>`}
+        </section>
+
+        <section class="dashboard-card dashboard-quiz surface" aria-labelledby="dashboard-quiz-title">
+          <div class="dashboard-card-heading">
+            <div><span class="eyebrow">LATIHAN TERAKHIR</span><h2 id="dashboard-quiz-title">Kuis Terakhir</h2></div>
+            <a class="text-link small" href="#/progress">Lihat Detail <span aria-hidden="true">→</span></a>
+          </div>
+          ${latestScore ? `<div class="dashboard-quiz-summary">
+            <div class="dashboard-quiz-mark" aria-hidden="true">✓</div>
+            <div class="dashboard-quiz-score"><span>Skor</span><strong>${latestScore.percent}%</strong></div>
+          </div>
+          <div class="dashboard-quiz-meta"><strong>${escapeHtml(chapterTitle(latestScore.chapter))}</strong><span>${latestScore.correct} dari ${latestScore.total} jawaban benar</span><time datetime="${escapeHtml(latestScore.date)}">${escapeHtml(latestQuizDate)}</time></div>` : `<div class="dashboard-empty-state"><strong>Belum ada hasil kuis.</strong><span>Latihan tersedia kapan saja dan tanpa batas waktu.</span><a class="button button-secondary" href="#/quiz">Mulai Kuis</a></div>`}
+        </section>
+
+        <section class="dashboard-card dashboard-achievements surface" aria-labelledby="dashboard-achievements-title">
+          <div class="dashboard-card-heading">
+            <div><span class="eyebrow">KOLEKSI BELAJAR</span><h2 id="dashboard-achievements-title">Pencapaian</h2></div>
+            <a class="text-link small" href="#/achievements">Lihat Semua <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="dashboard-achievement-grid">
+            ${achievements.map(({ item, unlocked }) => `<article class="dashboard-achievement ${unlocked ? "is-unlocked" : "is-locked"}">
+              <span class="dashboard-achievement-icon" aria-hidden="true">${unlocked ? item.icon : "◇"}</span>
+              <strong>${escapeHtml(item.name)}</strong>
+              <small>${unlocked ? "Terbuka" : "Terkunci"}</small>
+            </article>`).join("")}
+          </div>
+        </section>
+
+        <section class="dashboard-card dashboard-review surface" aria-labelledby="dashboard-review-title">
+          <div class="dashboard-card-heading">
+            <div><span class="eyebrow">PENGUATAN PEMAHAMAN</span><h2 id="dashboard-review-title">Materi untuk Diulang</h2></div>
+            <a class="text-link small" href="#/review">Pusat Review <span aria-hidden="true">→</span></a>
+          </div>
+          ${review ? `<article class="dashboard-review-item">
+            <span class="dashboard-review-mark" aria-hidden="true">${review.kind === "question" ? "?" : "↗"}</span>
+            <div class="dashboard-review-copy"><span>${escapeHtml(review.detail)}</span><strong>${escapeHtml(review.title)}</strong><small>Pernah ditinjau ${review.count} kali · ${new Date(review.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</small></div>
+            ${reviewAction}
+          </article>` : `<div class="dashboard-empty-state"><strong>Belum ada yang perlu diulang.</strong><span>Soal atau latihan yang perlu ditinjau akan muncul di sini.</span><a class="button button-secondary" href="#/quiz">Coba Kuis</a></div>`}
+        </section>
+      </section>
+
+      <section class="dashboard-shortcuts" aria-label="Jelajahi fitur">
+        <a class="dashboard-shortcut spotlight-surface" href="#/learn"><span aria-hidden="true">▤</span>Pusat belajar</a>
+        <a class="dashboard-shortcut spotlight-surface" href="#/simulations"><span aria-hidden="true">↗</span>Simulasi keuangan</a>
+        <a class="dashboard-shortcut spotlight-surface" href="#/quiz"><span aria-hidden="true">◇</span>Arena kuis · ${QUESTION_BANK.length} soal</a>
+      </section>
+      <p class="notice dashboard-privacy-note">XP dan progres tersimpan lokal di browser ini sebagai motivasi belajar, bukan reward yang aman terhadap manipulasi atau sinkron antarperangkat.</p>
     </div>`, "dashboard");
   }
   function learnView() {
     const progress = progressFor(profile().id);
-    return shell(`<div class="page-wrap"><span class="eyebrow">Pusat belajar</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0">Pilih jalur yang sesuai.</h1><p class="lead" style="font-size:16px">Jelajahi literasi keuangan, materi pengayaan kelas 10–12, atau cari topik tertentu.</p>
-      <section class="path-choice-grid"><a class="path-choice literacy-path" href="#/literacy"><span class="eyebrow">JALUR MANDIRI</span><h2>Jalur Literasi Keuangan</h2><p>Pahami uang. Kendalikan keputusan. Bangun masa depan.</p><span class="text-link">8 bab · 64 materi →</span></a><a class="path-choice" href="#/curriculum"><span class="eyebrow">PENGAYAAN SEKOLAH</span><h2>Kurikulum Ekonomi Kelas 10–12</h2><p>Materi pengayaan terstruktur. Bab, semester, dan urutan perlu diselaraskan dengan kurikulum sekolah.</p><span class="text-link">3 jenjang · 33 bab →</span></a></section>
-      <section class="section-heading" style="margin-top:0"><div><span class="eyebrow">Koleksi tersedia</span><h2>Fondasi keuangan</h2></div><span class="small muted">Delapan bab · ${DATA.chapters.reduce((sum, chapter) => sum + chapter.lessons.length, 0)} materi</span></section><section class="chapter-grid">${DATA.chapters.map(chapter => {
-        const completed = chapter.lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
-        return `<a class="surface chapter-card" href="#/chapter/${chapter.id}"><div class="chapter-top"><span class="chapter-number">BAB ${chapter.number}</span><span class="chapter-icon">${chapter.icon}</span></div><h3>${escapeHtml(chapter.title)}</h3><p>${escapeHtml(chapter.description)}</p><p class="small muted">${completed}/${chapter.lessons.length} materi selesai →</p></a>`;
+    const lessons = allLessons();
+    const completed = lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
+    const percent = lessons.length ? Math.round(completed / lessons.length * 100) : 0;
+    const literacyLessons = pathLessons("literacy");
+    const curriculumLessons = pathLessons("curriculum");
+    const recommendation = recommendedLesson(lessons, progress);
+    const recommendationState = recommendation && learningStatus(recommendation, progress);
+    return shell(`<div class="page-wrap learning-hub">
+      <header class="learning-intro">
+        <span class="eyebrow">PUSAT BELAJAR</span>
+        <h1>Selangkah lebih paham.</h1>
+        <p class="lead">Pilih topik yang dekat dengan hidupmu, pelajari konsepnya, lalu coba terapkan lewat latihan singkat.</p>
+      </header>
+
+      <section class="learning-overview surface" aria-label="Ringkasan progres belajar">
+        <div class="learning-overview-progress">
+          <div class="learning-overview-heading"><span class="eyebrow">PROGRES BELAJARMU</span><strong>${percent}%</strong></div>
+          <div class="lesson-progress" role="progressbar" aria-label="Progres materi belajar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div>
+          <span class="small muted">${completed} dari ${lessons.length} materi selesai</span>
+        </div>
+        <div class="learning-overview-stats">
+          <div><span>Materi tersedia</span><strong>${lessons.length}</strong></div>
+          <div><span>Materi selesai</span><strong>${completed}</strong></div>
+        </div>
+      </section>
+
+      ${recommendation ? `<a class="learning-recommendation surface" href="#/lesson/${recommendation.id}">
+        <span class="learning-recommendation-mark" aria-hidden="true">→</span>
+        <span class="learning-recommendation-copy"><span class="eyebrow">${recommendationState.label === "Sedang dipelajari" ? "LANJUTKAN DARI PROGRESMU" : "LANGKAH BERIKUTNYA"}</span><strong>${escapeHtml(recommendation.title)}</strong><small>${escapeHtml(recommendation.chapter.title)} · ${recommendation.minutes || 5} menit</small></span>
+        <span class="learning-recommendation-action">${recommendationState.label === "Sedang dipelajari" ? "Lanjutkan" : "Mulai"} <span aria-hidden="true">→</span></span>
+      </a>` : `<div class="learning-recommendation learning-recommendation-complete surface" role="status"><span class="learning-recommendation-mark" aria-hidden="true">✓</span><span class="learning-recommendation-copy"><span class="eyebrow">SEMUA MATERI SELESAI</span><strong>Hebat, seluruh materi yang tersedia sudah kamu tuntaskan.</strong><small>Kamu tetap bisa membuka kembali materi kapan saja.</small></span></div>`}
+
+      <section class="learning-path-section" aria-labelledby="learning-paths-title">
+        <div class="section-heading learning-section-heading"><div><span class="eyebrow">PILIH CARA BELAJARMU</span><h2 id="learning-paths-title">Jalur pembelajaran</h2></div><span class="small muted">Mulai dari topik yang paling relevan</span></div>
+        <div class="path-choice-grid learning-path-grid">
+          <a class="path-choice literacy-path learning-path-choice" href="#/literacy">
+            <span class="eyebrow">JALUR MANDIRI</span><h3>Literasi keuangan</h3>
+            <p>Pahami uang, kebiasaan, risiko, dan keputusan sehari-hari dengan ritmemu sendiri.</p>
+            <span class="learning-path-meta">${PATHS.literacyChapters.length} bab · ${literacyLessons.length} materi · ${literacyLessons.filter(lesson => progress.completed.includes(lesson.id)).length} selesai</span>
+            <span class="text-link">Jelajahi jalur <span aria-hidden="true">→</span></span>
+          </a>
+          <a class="path-choice learning-path-choice" href="#/curriculum">
+            <span class="eyebrow">PENGAYAAN SEKOLAH</span><h3>Ekonomi kelas 10–12</h3>
+            <p>Pengayaan konsep ekonomi yang dapat diselaraskan dengan arahan guru dan kurikulum sekolah.</p>
+            <span class="learning-path-meta">${new Set(PATHS.curriculum.map(chapter => chapter.grade)).size} jenjang · ${PATHS.curriculum.length} bab · ${curriculumLessons.length} materi</span>
+            <span class="text-link">Jelajahi jenjang <span aria-hidden="true">→</span></span>
+          </a>
+        </div>
+      </section>
+
+      <section class="learning-collection" aria-labelledby="foundation-title">
+        <div class="section-heading learning-section-heading"><div><span class="eyebrow">MULAI DARI DASAR</span><h2 id="foundation-title">Fondasi keuangan</h2></div><span class="small muted">${DATA.chapters.length} bab · ${DATA.chapters.reduce((sum, chapter) => sum + chapter.lessons.length, 0)} materi</span></div>
+        <section class="chapter-grid learning-chapter-grid" aria-label="Bab Fondasi keuangan">${DATA.chapters.map(chapter => {
+        const total = chapter.lessons.length;
+        const done = chapter.lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
+        const chapterPercent = total ? Math.round(done / total * 100) : 0;
+        return `<a class="surface chapter-card learning-chapter-card" href="#/chapter/${chapter.id}">
+          <div class="chapter-top"><span class="chapter-number">BAB ${chapter.number}</span><span class="chapter-icon" aria-hidden="true">${chapter.icon}</span></div>
+          <h3>${escapeHtml(chapter.title)}</h3><p>${escapeHtml(chapter.description)}</p>
+          <div class="learning-chapter-progress"><div class="split small"><span>${done}/${total} materi selesai</span><strong>${chapterPercent}%</strong></div><div class="lesson-progress" role="progressbar" aria-label="Progres ${escapeHtml(chapter.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${chapterPercent}"><span style="width:${chapterPercent}%"></span></div></div>
+          <span class="learning-card-link">Buka bab <span aria-hidden="true">→</span></span>
+        </a>`;
       }).join("")}</section>
-      <section class="section-heading"><div><span class="eyebrow">Temukan materi</span><h2>Pencarian dan filter</h2></div><span class="small muted">${allLessons().length} materi tersedia</span></section>
-      <section class="surface learning-finder"><div class="finder-controls">
+      </section>
+
+      <section class="learning-catalog" aria-labelledby="learning-catalog-title">
+        <div class="section-heading learning-section-heading"><div><span class="eyebrow">CARI SESUAI KEBUTUHAN</span><h2 id="learning-catalog-title">Temukan materi</h2></div><span class="small muted">${lessons.length} materi dalam katalog</span></div>
+        <section class="surface learning-finder" aria-label="Pencarian dan filter materi"><div class="finder-controls">
         <div class="field"><label for="learning-search">Cari judul atau isi</label><input id="learning-search" type="search" placeholder="Contoh: inflasi, biaya peluang, tabungan"></div>
         <div class="field"><label for="learning-track">Jalur</label><select id="learning-track"><option value="all">Semua jalur</option><option value="literacy">Literasi Keuangan</option><option value="curriculum">Kurikulum sekolah</option></select></div>
         <div class="field"><label for="learning-grade">Kelas</label><select id="learning-grade"><option value="all">Semua kelas</option><option value="10">Kelas 10</option><option value="11">Kelas 11</option><option value="12">Kelas 12</option></select></div>
         <div class="field"><label for="learning-chapter">Bab</label><select id="learning-chapter"><option value="all">Semua bab</option>${allChapters().map(chapter => `<option value="${chapter.id}">${escapeHtml(chapter.title)}</option>`).join("")}${PATHS.curriculum.map(chapter => `<option value="${chapter.id}">Kelas ${chapter.grade} · ${escapeHtml(chapter.title)}</option>`).join("")}</select></div>
-        <div class="field"><label for="learning-status">Status</label><select id="learning-status"><option value="all">Semua status</option><option value="not-started">Belum selesai</option><option value="done">Selesai</option></select></div>
+        <div class="field"><label for="learning-status">Status</label><select id="learning-status"><option value="all">Semua status</option><option value="not-started">Belum selesai</option><option value="in-progress">Sedang dipelajari</option><option value="done">Selesai</option></select></div>
         <div class="field"><label for="learning-sort">Urutkan</label><select id="learning-sort"><option value="path">Jalur & bab</option><option value="title">Judul A–Z</option><option value="time">Waktu terpendek</option></select></div>
       </div><p class="small muted" id="finder-count" aria-live="polite"></p><div id="learning-results" class="learning-results"></div></section>
+      </section>
     </div>`, "learn");
   }
   function literacyView() {
     const progress = progressFor(profile().id);
+    const lessons = pathLessons("literacy");
+    const completed = lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
+    const percent = lessons.length ? Math.round(completed / lessons.length * 100) : 0;
+    const recommendation = recommendedLesson(lessons, progress);
     const cards = PATHS.literacyChapters.map(chapter => {
-      const lessons = chapterLessons(chapter);
-      const done = lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
-      return `<a class="surface chapter-card" href="#/chapter/${chapter.id}"><div class="chapter-top"><span class="chapter-number">BAB ${chapter.number}</span><span class="chapter-icon">${chapter.icon}</span></div><h3>${escapeHtml(chapter.title)}</h3><p>${escapeHtml(chapter.description)}</p><p class="small muted" style="margin:12px 0 0">${done}/${lessons.length} materi · ${lessons.length * 5} menit perkiraan</p></a>`;
+      const chapterItems = chapterLessons(chapter);
+      const done = chapterItems.filter(lesson => progress.completed.includes(lesson.id)).length;
+      const chapterPercent = chapterItems.length ? Math.round(done / chapterItems.length * 100) : 0;
+      return `<a class="surface chapter-card learning-chapter-card" href="#/chapter/${chapter.id}"><div class="chapter-top"><span class="chapter-number">BAB ${chapter.number}</span><span class="chapter-icon" aria-hidden="true">${chapter.icon}</span></div><h3>${escapeHtml(chapter.title)}</h3><p>${escapeHtml(chapter.description)}</p><div class="learning-chapter-progress"><div class="split small"><span>${done}/${chapterItems.length} materi selesai</span><strong>${chapterPercent}%</strong></div><div class="lesson-progress" role="progressbar" aria-label="Progres ${escapeHtml(chapter.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${chapterPercent}"><span style="width:${chapterPercent}%"></span></div></div><span class="learning-card-link">Buka bab <span aria-hidden="true">→</span></span></a>`;
     }).join("");
-    return shell(`<div class="page-wrap"><a class="text-link small" href="#/learn">← Semua jalur</a><header class="path-hero"><span class="eyebrow">JALUR LITERASI KEUANGAN</span><h1>Pahami uang.<br><span>Kendalikan keputusan.</span><br>Bangun masa depan.</h1><p class="lead" style="font-size:17px">Jalur mandiri yang dapat dimulai kapan saja. Pilih satu topik dan hubungkan dengan keputusan sehari-hari.</p><a class="button button-primary" href="#/lesson/literasi-uang-01">Mulai jalur <span aria-hidden="true">→</span></a></header><section class="chapter-grid" aria-label="Delapan bab Jalur Literasi Keuangan">${cards}</section><p class="notice" style="margin-top:20px">Materi edukasi umum. Contoh investasi tidak menjamin hasil dan bukan rekomendasi produk.</p></div>`, "literacy");
+    return shell(`<div class="page-wrap learning-path-page">
+      <a class="text-link small learning-back-link" href="#/learn">← Semua jalur</a>
+      <header class="path-hero learning-path-hero"><span class="eyebrow">JALUR LITERASI KEUANGAN</span><h1>Pahami uang.<br><span>Kendalikan keputusan.</span><br>Bangun masa depan.</h1><p class="lead">Jalur mandiri untuk memahami konsep keuangan dan menghubungkannya dengan keputusan sehari-hari.</p>
+        <div class="learning-path-summary"><div class="learning-path-summary-copy"><strong>${completed}/${lessons.length} materi selesai</strong><span>${percent}% dari jalur ini</span></div><div class="lesson-progress" role="progressbar" aria-label="Progres Jalur Literasi Keuangan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div>
+          ${recommendation ? `<a class="button button-primary" href="#/lesson/${recommendation.id}">${progress.practiced.includes(recommendation.id) || progress.reviewLessons[recommendation.id] ? "Lanjutkan belajar" : "Mulai belajar"} <span aria-hidden="true">→</span></a>` : `<span class="learning-path-complete">Semua materi jalur ini selesai</span>`}
+        </div>
+      </header>
+      <div class="section-heading learning-section-heading"><div><span class="eyebrow">${PATHS.literacyChapters.length} BAB · ${lessons.length} MATERI</span><h2>Jelajahi jalur</h2></div><span class="small muted">Pilih bab untuk melihat urutan materi</span></div>
+      <section class="chapter-grid learning-chapter-grid" aria-label="Bab Jalur Literasi Keuangan">${cards}</section>
+      <p class="notice learning-disclaimer">Materi edukasi umum. Contoh investasi tidak menjamin hasil dan bukan rekomendasi produk.</p>
+    </div>`, "literacy");
   }
   function curriculumView(grade) {
     if (grade) {
       const items = PATHS.curriculum.filter(chapter => chapter.grade === Number(grade));
       if (!items.length) return notFoundView();
       const progress = progressFor(profile().id);
+      const lessons = items.flatMap(chapter => chapterLessons(chapter));
+      const completed = lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
+      const percent = lessons.length ? Math.round(completed / lessons.length * 100) : 0;
       const cards = items.map(chapter => {
-        const lessons = chapterLessons(chapter);
-        const done = lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
-        return `<a class="curriculum-row surface" href="#/chapter/${chapter.id}"><span class="chapter-number">BAB ${String(items.indexOf(chapter) + 1).padStart(2, "0")} · SEMESTER ${chapter.semester}</span><strong>${escapeHtml(chapter.title)}</strong><p>${escapeHtml(chapter.summary)}</p><span class="small muted">${done}/${lessons.length} materi pengayaan · ${done === lessons.length ? "Selesai" : "Belum selesai"}</span></a>`;
+        const chapterItems = chapterLessons(chapter);
+        const done = chapterItems.filter(lesson => progress.completed.includes(lesson.id)).length;
+        const chapterPercent = chapterItems.length ? Math.round(done / chapterItems.length * 100) : 0;
+        return `<a class="curriculum-row surface learning-curriculum-row" href="#/chapter/${chapter.id}"><span class="chapter-number">BAB ${String(items.indexOf(chapter) + 1).padStart(2, "0")} · SEMESTER ${chapter.semester}</span><strong>${escapeHtml(chapter.title)}</strong><p>${escapeHtml(chapter.summary)}</p><span class="small muted">${done}/${chapterItems.length} materi selesai</span><div class="lesson-progress" role="progressbar" aria-label="Progres ${escapeHtml(chapter.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${chapterPercent}"><span style="width:${chapterPercent}%"></span></div></a>`;
       }).join("");
-      return shell(`<div class="page-wrap"><a class="text-link small" href="#/curriculum">← Semua jenjang</a><span class="eyebrow" style="display:block;margin-top:20px">KURIKULUM EKONOMI · PENGAYAAN</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0">Kelas ${grade}</h1><p class="lead" style="font-size:16px">Susunan dan semester dapat disesuaikan dengan kurikulum yang digunakan sekolah dan arahan guru.</p><section class="curriculum-list">${cards}</section></div>`, "curriculum");
+      return shell(`<div class="page-wrap learning-path-page learning-curriculum-page"><a class="text-link small learning-back-link" href="#/curriculum">← Semua jenjang</a><header class="learning-subpage-header"><span class="eyebrow">KURIKULUM EKONOMI · PENGAYAAN</span><h1>Kelas ${grade}</h1><p class="lead">Susunan dan semester dapat disesuaikan dengan kurikulum yang digunakan sekolah dan arahan guru.</p><div class="learning-path-summary"><div class="learning-path-summary-copy"><strong>${completed}/${lessons.length} materi selesai</strong><span>${percent}% dari materi kelas ${grade}</span></div><div class="lesson-progress" role="progressbar" aria-label="Progres kelas ${grade}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div></div></header><section class="curriculum-list learning-curriculum-list" aria-label="Bab pengayaan kelas ${grade}">${cards}</section></div>`, "curriculum");
     }
-    return shell(`<div class="page-wrap"><span class="eyebrow">Jalur kurikulum sekolah</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0">Ekonomi kelas 10–12.</h1><p class="lead" style="font-size:16px">Rangkaian pengayaan konseptual untuk mendukung pembelajaran. Bukan susunan resmi universal; guru dapat menyesuaikan urutan, capaian, dan semester.</p><section class="grade-grid">${[10,11,12].map(grade => {
+    const progress = progressFor(profile().id);
+    return shell(`<div class="page-wrap learning-path-page learning-curriculum-page"><header class="learning-subpage-header"><span class="eyebrow">JALUR KURIKULUM SEKOLAH</span><h1>Ekonomi kelas 10–12.</h1><p class="lead">Rangkaian pengayaan konseptual untuk mendukung pembelajaran. Bukan susunan resmi universal; guru dapat menyesuaikan urutan, capaian, dan semester.</p></header><div class="section-heading learning-section-heading"><div><span class="eyebrow">PENGAYAAN TERSTRUKTUR</span><h2>Pilih jenjang</h2></div><span class="small muted">Progres dihitung dari materi yang selesai</span></div><section class="grade-grid learning-grade-grid" aria-label="Jenjang kurikulum">${[10,11,12].map(grade => {
       const chapters = PATHS.curriculum.filter(chapter => chapter.grade === grade);
-      return `<a class="grade-card surface" href="#/curriculum/${grade}"><span class="eyebrow">${chapters.length} BAB PENGAYAAN</span><h2>Kelas ${grade}</h2><p>${grade === 10 ? "Fondasi ekonomi" : grade === 11 ? "Pendalaman ekonomi" : "Penerapan dan analisis ekonomi"}</p><span class="text-link">Jelajahi materi →</span></a>`;
-    }).join("")}</section><p class="notice" style="margin-top:20px">Materi pengayaan perlu ditinjau dan diselaraskan oleh guru terhadap kurikulum, kalender belajar, serta sumber terkini di sekolah.</p></div>`, "curriculum");
+      const lessons = chapters.flatMap(chapter => chapterLessons(chapter));
+      const completed = lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
+      const percent = lessons.length ? Math.round(completed / lessons.length * 100) : 0;
+      return `<a class="grade-card surface learning-grade-card" href="#/curriculum/${grade}"><span class="eyebrow">${chapters.length} BAB PENGAYAAN</span><h2>Kelas ${grade}</h2><p>${grade === 10 ? "Fondasi ekonomi" : grade === 11 ? "Pendalaman ekonomi" : "Penerapan dan analisis ekonomi"}</p><div class="learning-chapter-progress"><div class="split small"><span>${completed}/${lessons.length} materi selesai</span><strong>${percent}%</strong></div><div class="lesson-progress" role="progressbar" aria-label="Progres materi kelas ${grade}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div></div><span class="text-link">Jelajahi materi →</span></a>`;
+    }).join("")}</section><p class="notice learning-disclaimer">Materi pengayaan perlu ditinjau dan diselaraskan oleh guru terhadap kurikulum, kalender belajar, serta sumber terkini di sekolah.</p></div>`, "curriculum");
   }
   function chapterView(id) {
     const chapter = findChapter(id);
     if (!chapter) return notFoundView();
     const progress = progressFor(profile().id);
     const lessons = chapterLessons(chapter);
-    const rows = lessons.map((lesson, i) => `<a class="surface lesson-row" href="#/lesson/${lesson.id}"><div><span class="eyebrow">${i + 1} · ${lesson.minutes || 5} menit</span><h3>${escapeHtml(lesson.title)}</h3><p>${escapeHtml(lesson.opener)}</p></div><span class="${progress.completed.includes(lesson.id) ? "done-mark" : "muted"}" aria-label="${progress.completed.includes(lesson.id) ? "Selesai" : "Belum selesai"}">${progress.completed.includes(lesson.id) ? "✓" : "→"}</span></a>`).join("");
+    const completed = lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
+    const percent = lessons.length ? Math.round(completed / lessons.length * 100) : 0;
+    const rows = lessons.map((lesson, i) => {
+      const state = learningStatus(lesson, progress);
+      return `<a class="surface lesson-row learning-lesson-row ${state.className}" href="#/lesson/${lesson.id}">
+        <span class="learning-lesson-index">${String(i + 1).padStart(2, "0")}</span>
+        <span class="learning-lesson-copy"><span class="eyebrow">${lesson.minutes || 5} menit</span><strong>${escapeHtml(lesson.title)}</strong><small>${escapeHtml(lesson.opener)}</small></span>
+        <span class="learning-status-pill ${state.className}">${state.label}</span><span class="learning-lesson-arrow" aria-hidden="true">${state.className === "is-done" ? "✓" : "→"}</span>
+      </a>`;
+    }).join("");
     const back = chapter.track === "curriculum" ? `curriculum/${chapter.grade}` : chapter.track === "literacy" ? "literacy" : "learn";
     const chapterEyebrow = chapter.track === "curriculum" ? `KELAS ${chapter.grade} · PENGAYAAN · SEMESTER ${chapter.semester}` : chapter.track === "literacy" ? `JALUR LITERASI · BAB ${chapter.number}` : `FONDASI KEUANGAN · BAB ${chapter.number}`;
-    return shell(`<div class="page-wrap narrow"><a class="text-link small" href="#/${back}">← Kembali ke jalur</a><section class="lesson-hero"><span class="eyebrow">${chapterEyebrow}</span><h1>${escapeHtml(chapter.title)}</h1><p class="lead" style="font-size:16px">${escapeHtml(chapter.description || chapter.summary)}</p>${chapter.enrichment ? '<span class="badge">Materi pengayaan · perlu penyesuaian guru</span>' : ""}</section><div class="section-heading" style="margin-top:16px"><div><h2 style="font-size:23px">Materi dalam bab ini</h2></div></div><section class="lesson-list">${rows}</section></div>`, chapter.track === "curriculum" ? "curriculum" : chapter.track === "literacy" ? "literacy" : "learn");
+    return shell(`<div class="page-wrap narrow learning-chapter-page"><a class="text-link small learning-back-link" href="#/${back}">← Kembali ke jalur</a><section class="lesson-hero learning-chapter-hero"><span class="eyebrow">${chapterEyebrow}</span><h1>${escapeHtml(chapter.title)}</h1><p class="lead">${escapeHtml(chapter.description || chapter.summary)}</p>${chapter.enrichment ? '<span class="badge">Materi pengayaan · perlu penyesuaian guru</span>' : ""}<div class="learning-path-summary"><div class="learning-path-summary-copy"><strong>${completed}/${lessons.length} materi selesai</strong><span>${percent}% bab terselesaikan</span></div><div class="lesson-progress" role="progressbar" aria-label="Progres bab ${escapeHtml(chapter.title)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div></div></section><div class="section-heading learning-section-heading"><div><span class="eyebrow">URUTAN BELAJAR</span><h2>Materi dalam bab ini</h2></div><span class="small muted">${lessons.length} materi</span></div><section class="lesson-list learning-lesson-list" aria-label="Materi ${escapeHtml(chapter.title)}">${rows}</section></div>`, chapter.track === "curriculum" ? "curriculum" : chapter.track === "literacy" ? "literacy" : "learn");
   }
   function lessonView(id) {
     const lesson = allLessons().find(item => item.id === id);
     if (!lesson) return notFoundView();
     const progress = progressFor(profile().id);
-    const lessons = chapterLessons(lesson.chapter);
-    const lessonIndex = lessons.findIndex(item => item.id === id);
     const isDone = progress.completed.includes(id);
     const hasPassedPractice = progress.practiced.includes(id);
-    return shell(`<div class="page-wrap narrow"><a class="text-link small" href="#/chapter/${lesson.chapter.id}">← Kembali ke ${escapeHtml(lesson.chapter.title)}</a>
-      <header class="lesson-hero"><span class="eyebrow">${lesson.track === "curriculum" ? `KELAS ${lesson.grade} · MATERI ${lessonIndex + 1} DARI ${lessons.length}` : `BAB ${lesson.chapter.number} · MATERI ${lessonIndex + 1} DARI ${lessons.length}`}</span><h1>${escapeHtml(lesson.title)}</h1><p class="lead" style="font-size:17px">${escapeHtml(lesson.opener)}</p>${lesson.objective ? `<p class="small muted"><strong>Tujuan:</strong> ${escapeHtml(lesson.objective)}</p>` : ""}</header>
-      <article class="lesson-content">
+    const path = pathLessons(lesson.track);
+    const pathIndex = path.findIndex(item => item.id === id);
+    const pathPercent = path.length ? Math.round((progress.completed.filter(lessonId => path.some(item => item.id === lessonId)).length / path.length) * 100) : 0;
+    const previous = pathIndex > 0 ? path[pathIndex - 1] : null;
+    const next = pathIndex >= 0 && pathIndex < path.length - 1 ? path[pathIndex + 1] : null;
+    const state = learningStatus(lesson, progress);
+    return shell(`<div class="page-wrap narrow learning-lesson-page"><a class="text-link small learning-back-link" href="#/chapter/${lesson.chapter.id}">← Daftar materi · ${escapeHtml(lesson.chapter.title)}</a>
+      <header class="lesson-hero learning-lesson-hero">
+        <span class="eyebrow">${lesson.track === "curriculum" ? `KELAS ${lesson.grade} · MATERI ${pathIndex + 1} DARI ${path.length}` : `${lesson.track === "literacy" ? "JALUR LITERASI" : "FONDASI KEUANGAN"} · MATERI ${pathIndex + 1} DARI ${path.length}`}</span>
+        <h1>${escapeHtml(lesson.title)}</h1><p class="lead">${escapeHtml(lesson.opener)}</p>
+        ${lesson.objective ? `<p class="learning-objective"><strong>Tujuan belajar</strong><span>${escapeHtml(lesson.objective)}</span></p>` : ""}
+        <div class="learning-lesson-meta"><span>${escapeHtml(lesson.chapter.title)}</span><span>${lesson.minutes || 5} menit</span>${lesson.difficulty ? `<span>Tingkat ${escapeHtml(lesson.difficulty)}</span>` : ""}<span class="learning-status-pill ${state.className}">${state.label}</span></div>
+        <div class="learning-path-summary"><div class="learning-path-summary-copy"><strong>Progres jalur</strong><span>${pathPercent}% materi selesai</span></div><div class="lesson-progress" role="progressbar" aria-label="Progres ${escapeHtml(learningPathName(lesson))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pathPercent}"><span style="width:${pathPercent}%"></span></div></div>
+      </header>
+      <article class="lesson-content learning-reading-flow">
         <section class="surface content-section"><h2>Konsep utama</h2><p>${escapeHtml(lesson.concept)}</p></section>
         <section class="surface content-section"><h2>Contoh sehari-hari</h2><p>${escapeHtml(lesson.example)}</p></section>
         <section class="surface content-section takeaway"><h2>Ingat inti ini</h2><p>${escapeHtml(lesson.takeaway)}</p></section>
@@ -698,6 +997,10 @@
       <section class="surface practice-box" aria-labelledby="practice-title"><span class="eyebrow">Cek pemahaman</span><h2 id="practice-title">${escapeHtml(lesson.practice)}</h2><div class="practice-options">${lesson.options.map((option, i) => `<button class="choice" data-action="practice-choice" data-index="${i}" aria-pressed="false">${escapeHtml(option)}</button>`).join("")}</div><p class="answer-feedback" id="practice-feedback" aria-live="polite"></p><button class="button button-secondary" data-action="practice-check" data-id="${lesson.id}" data-answer="${lesson.answer}" data-explanation="${encodeURIComponent(lesson.explanation)}">Periksa jawaban</button></section>
       <p class="small muted" id="completion-requirement">${isDone ? "Materi ini sudah tercatat selesai." : hasPassedPractice ? "Latihan sudah benar. Kamu dapat menyelesaikan materi ini." : "Jawab latihan dengan benar untuk membuka penyelesaian materi."}</p>
       <div class="lesson-footer"><a class="button button-secondary" href="#/chapter/${lesson.chapter.id}">Daftar materi</a><button class="button ${isDone ? "button-secondary" : "button-primary"}" data-action="${isDone ? "show-completion" : "complete-lesson"}" data-id="${lesson.id}" ${!isDone && !hasPassedPractice ? "disabled aria-describedby=\"completion-requirement\"" : ""}>${isDone ? "Lihat ringkasan penyelesaian →" : "Tandai selesai →"}</button></div>
+      <nav class="learning-sequence-nav" aria-label="Navigasi antar materi">
+        ${previous ? `<a class="learning-sequence-link" href="#/lesson/${previous.id}"><span class="eyebrow">SEBELUMNYA</span><strong>${escapeHtml(previous.title)}</strong></a>` : `<a class="learning-sequence-link" href="${learningPathHref(lesson)}"><span class="eyebrow">JALUR BELAJAR</span><strong>Kembali ke katalog</strong></a>`}
+        ${next ? `<a class="learning-sequence-link learning-sequence-next" href="#/lesson/${next.id}"><span class="eyebrow">BERIKUTNYA</span><strong>${escapeHtml(next.title)}</strong></a>` : `<a class="learning-sequence-link learning-sequence-next" href="${learningPathHref(lesson)}"><span class="eyebrow">AKHIR JALUR</span><strong>Lihat semua materi</strong></a>`}
+      </nav>
     </div>`, "lesson");
   }
   function completionView(id) {
@@ -921,7 +1224,7 @@
         return;
       }
       const remaining = values.income - planned;
-      const parts = [["Kebutuhan", values.needs, "#a78bfa"], ["Keinginan", values.wants, "#5ee3db"], ["Tabungan", values.savings, "#78dfb1"], ["Kewajiban", values.other, "#ffce74"]];
+      const parts = [["Kebutuhan", values.needs, "#65A9E8"], ["Keinginan", values.wants, "#65A9E8"], ["Tabungan", values.savings, "#65A9E8"], ["Kewajiban", values.other, "#FFD700"]];
       const chart = `<div class="budget-chart" role="img" aria-label="Visualisasi pembagian pemasukan">${parts.map(([name, amount, color]) => `<span title="${name} ${percentOf(amount, values.income)}%" style="width:${Math.min(amount / values.income * 100, 100)}%;background:${color}"></span>`).join("")}</div><div class="budget-legend">${parts.map(([name, amount, color]) => `<span><i style="background:${color}"></i>${name}: ${formatRupiah(amount)} (${percentOf(amount, values.income)}%)</span>`).join("")}</div>`;
       html = `<strong>${remaining >= 0 ? `Sisa ${formatRupiah(remaining)}` : `Melebihi pemasukan ${formatRupiah(Math.abs(remaining))}`}</strong>${chart}<p>Persentase dihitung dari pemasukan yang dimasukkan. Sesuaikan pos berdasarkan kebutuhan dan kewajibanmu sendiri.</p>`;
     }
@@ -964,7 +1267,7 @@
       : remaining === 0
         ? "Anggaran tepat terpakai setelah kejadian. Tidak ada bantalan untuk perubahan lain."
         : `Tersisa ${formatRupiah(remaining)} sebagai bantalan virtual setelah kebutuhan, tabungan, kewajiban, dan kejadian.`;
-    const parts = [["Kebutuhan", values.needs, "#a78bfa"], ["Keinginan", values.wants, "#5ee3db"], ["Tabungan", values.savings, "#78dfb1"], ["Kewajiban", values.other, "#ffce74"], [event.title, event.amount, "#ff9a9f"]];
+    const parts = [["Kebutuhan", values.needs, "#65A9E8"], ["Keinginan", values.wants, "#65A9E8"], ["Tabungan", values.savings, "#65A9E8"], ["Kewajiban", values.other, "#FFD700"], [event.title, event.amount, "#FFD700"]];
     result.innerHTML = `<strong>${remaining < 0 ? "Perlu penyesuaian" : "Ringkasan anggaran virtual"}</strong><p>${escapeHtml(evaluation)}</p><div class="budget-chart" role="img" aria-label="Pembagian anggaran virtual">${parts.map(([name, amount, color]) => `<span title="${escapeHtml(name)} ${percentOf(amount, values.income)}%" style="width:${Math.min(amount / values.income * 100, 100)}%;background:${color}"></span>`).join("")}</div><div class="budget-legend">${parts.map(([name, amount, color]) => `<span><i style="background:${color}"></i>${escapeHtml(name)} ${formatRupiah(amount)}</span>`).join("")}</div>`;
     result.classList.add("visible");
     error.textContent = "";
@@ -1203,7 +1506,7 @@
   function profileView() {
     const user = profile();
     if (!user || user.role !== "student") return notFoundView();
-    return shell(`<div class="page-wrap narrow"><span class="eyebrow">Profil & pengaturan</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0">Ruang belajarmu.</h1><p class="lead" style="font-size:16px">Perbarui nama atau kelas yang ditampilkan. ID profil lokal tetap sama sehingga progres tidak berubah.</p><section class="surface pad"><form id="profile-form"><div class="field"><label for="profile-name">Nama lengkap</label><input id="profile-name" name="name" value="${escapeHtml(user.name)}" minlength="2" maxlength="80" required></div><div class="field"><label for="profile-class">Kelas atau peran</label><input id="profile-class" name="className" value="${escapeHtml(user.className)}" minlength="2" maxlength="40" required></div><p class="form-message" id="profile-error" role="alert"></p><button class="button button-primary" type="submit">Simpan profil</button></form></section><section class="surface pad" style="margin-top:18px"><span class="eyebrow">DATA & PRIVASI</span><h2 style="font-size:21px;margin:10px 0">Penyimpanan browser</h2><p>Profil dan progres hanya tersimpan pada browser/perangkat ini jika penyimpanan lokal tersedia. Identitas tidak diverifikasi, data tidak dikirim ke server, dan tidak tersinkron otomatis antarperangkat.</p><div class="row"><a class="button button-secondary" href="#/progress">Lihat progres</a><button class="button button-quiet" data-action="logout">Keluar dan ganti profil</button></div></section></div>`, "");
+    return shell(`<div class="page-wrap narrow"><span class="eyebrow">Profil & pengaturan</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0">Ruang belajarmu.</h1><p class="lead" style="font-size:16px">Perbarui nama atau kelas yang ditampilkan. ID profil lokal tetap sama sehingga progres tidak berubah.</p><section class="surface pad"><form id="profile-form"><div class="field"><label for="profile-name">Nama lengkap</label><input id="profile-name" name="name" value="${escapeHtml(user.name)}" minlength="2" maxlength="80" required></div><div class="field"><label for="profile-class">Kelas atau peran</label><input id="profile-class" name="className" value="${escapeHtml(user.className)}" minlength="2" maxlength="40" required></div><p class="form-message" id="profile-error" role="alert"></p><button class="button button-primary" type="submit">Simpan profil</button></form></section><section class="surface pad" style="margin-top:18px"><span class="eyebrow">DATA & PRIVASI</span><h2 style="font-size:21px;margin:10px 0">Penyimpanan browser</h2><p>Profil dan progres hanya tersimpan pada browser/perangkat ini jika penyimpanan lokal tersedia. Identitas tidak diverifikasi, data tidak dikirim ke server, dan tidak tersinkron otomatis antarperangkat.</p><div class="row"><a class="button button-secondary" href="#/progress">Lihat progres</a><button class="button button-quiet" data-action="logout">Keluar dan ganti profil</button></div></section></div>`, "profile");
   }
   function recordSimulation(progressOrKey, keyOrLabel, optionalLabel) {
     const suppliedProgress = progressOrKey && typeof progressOrKey === "object";
@@ -1305,16 +1608,27 @@
     const progress = progressFor(profile().id);
     const matching = allLessons().filter(lesson => {
       const haystack = [lesson.title, lesson.opener, lesson.concept, lesson.example, lesson.chapter.title, lesson.objective || ""].join(" ").toLocaleLowerCase("id");
+      const state = learningStatus(lesson, progress);
       return (!query || haystack.includes(query)) &&
         (track === "all" || (track === "literacy" && ["legacy", "literacy"].includes(lesson.track)) || lesson.track === track) &&
         (grade === "all" || String(lesson.grade || "") === grade) &&
         (chapter === "all" || lesson.chapter.id === chapter) &&
-        (status === "all" || (status === "done") === progress.completed.includes(lesson.id));
+        (status === "all" ||
+          (status === "not-started" && state.className !== "is-done") ||
+          (status === "in-progress" && state.className === "is-in-progress") ||
+          (status === "done" && state.className === "is-done"));
     });
     if (sort === "title") matching.sort((a, b) => a.title.localeCompare(b.title, "id"));
     if (sort === "time") matching.sort((a, b) => (a.minutes || 5) - (b.minutes || 5) || a.title.localeCompare(b.title, "id"));
     document.getElementById("finder-count").textContent = `${matching.length} materi ditemukan`;
-    container.innerHTML = matching.length ? matching.slice(0, 60).map(lesson => `<a class="learning-result" href="#/lesson/${lesson.id}"><span class="eyebrow">${lesson.track === "curriculum" ? `KELAS ${lesson.grade} · PENGAYAAN` : lesson.track === "legacy" ? "FONDASI KEUANGAN" : "JALUR LITERASI KEUANGAN"} · ${escapeHtml(lesson.chapter.title)}</span><strong>${escapeHtml(lesson.title)}</strong><span class="small muted">${escapeHtml(lesson.opener)}</span><span class="small ${progress.completed.includes(lesson.id) ? "done-mark" : "muted"}">${progress.completed.includes(lesson.id) ? "Selesai ✓" : "Belum selesai"} · ${lesson.minutes || 5} menit →</span></a>`).join("") : '<div class="empty-state">Tidak ada materi yang cocok. Coba kata kunci atau filter lain.</div>';
+    container.innerHTML = matching.length ? matching.slice(0, 60).map(lesson => {
+      const state = learningStatus(lesson, progress);
+      return `<a class="learning-result ${state.className}" href="#/lesson/${lesson.id}">
+        <span class="eyebrow">${lesson.track === "curriculum" ? `KELAS ${lesson.grade} · PENGAYAAN` : lesson.track === "legacy" ? "FONDASI KEUANGAN" : "JALUR LITERASI KEUANGAN"} · ${escapeHtml(lesson.chapter.title)}</span>
+        <strong>${escapeHtml(lesson.title)}</strong><span class="small muted">${escapeHtml(lesson.opener)}</span>
+        <span class="learning-result-meta"><span class="learning-status-pill ${state.className}">${state.label}</span><span>${lesson.minutes || 5} menit <span aria-hidden="true">→</span></span></span>
+      </a>`;
+    }).join("") : '<div class="empty-state">Tidak ada materi yang cocok. Coba kata kunci atau filter lain.</div>';
     if (matching.length > 60) document.getElementById("finder-count").textContent += " · menampilkan 60 hasil pertama";
   }
   function notFoundView() {
@@ -1752,8 +2066,8 @@
       const remaining = total - sum;
       const note = remaining < 0 ? `Pengeluaran melebihi pemasukan sebesar ${formatRupiah(Math.abs(remaining))}. Tinjau pos fleksibel sebelum membuat rencana.` : wantsPercent > 40 ? "Porsi keinginan cukup besar; cek apakah kebutuhan penting sudah aman." : savingsPercent === 0 ? "Belum ada pos tabungan. Jika memungkinkan, sisihkan sebagian sesuai kemampuan." : "Cocokkan pembagian ini dengan kebutuhan dan pengeluaran nyata.";
       const chartParts = [
-        ["Kebutuhan", needs, "#a78bfa"], ["Keinginan", wants, "#5ee3db"],
-        ["Tabungan", savings, "#78dfb1"], ["Lain-lain", other, "#ffce74"]
+        ["Kebutuhan", needs, "#65A9E8"], ["Keinginan", wants, "#65A9E8"],
+        ["Tabungan", savings, "#65A9E8"], ["Lain-lain", other, "#FFD700"]
       ];
       const chart = `<div class="budget-chart" role="img" aria-label="Visualisasi pembagian pemasukan">${chartParts.map(part => `<span title="${part[0]} ${percentOf(part[1], total)}%" style="width:${Math.min(part[1] / total * 100, 100)}%;background:${part[2]}"></span>`).join("")}</div>`;
       error.textContent = "";
