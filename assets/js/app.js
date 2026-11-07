@@ -563,6 +563,40 @@
   function brand() {
     return `<a class="brand" href="#/home" aria-label="ECONOVA, beranda"><img class="brand-logo" src="assets/images/econova-mark.png" alt=""><span class="brand-wording"><span>ECONOVA</span><small>FINANCIAL LITERACY</small></span></a>`;
   }
+  const ARENA_PAGES = ["quiz", "simulations", "challenges", "finance-lab", "life-simulator"];
+  const REPORT_PAGES = ["insights", "progress", "achievements", "review"];
+  function arenaSubnav(active) {
+    const items = [
+      ["quiz", "Kuis", "#/quiz"],
+      ["simulations", "Simulasi", "#/simulations"],
+      ["challenges", "Praktik keputusan", "#/challenges"],
+      ["finance-lab", "Finance Lab", "#/finance-lab"],
+      ["life-simulator", "Life Simulator", "#/life-simulator"]
+    ];
+    return `<div class="page-wrap arena-subnav-wrap"><nav class="arena-subnav" aria-label="Aktivitas Arena"><span class="arena-subnav-label">ARENA</span><ul>${items.map(([id, label, href]) => `<li><a href="${href}" ${id === active ? 'aria-current="page"' : ""}>${label}</a></li>`).join("")}</ul></nav></div>`;
+  }
+  function reportSubnav(active) {
+    const items = [
+      ["insights", "Insights", "#/insights"],
+      ["progress", "Progres", "#/progress"],
+      ["achievements", "Pencapaian", "#/achievements"],
+      ["review", "Review", "#/review"]
+    ];
+    return `<div class="page-wrap report-subnav-wrap"><nav class="report-subnav" aria-label="Navigasi Laporan"><span class="report-subnav-label">LAPORAN</span><ul>${items.map(([id, label, href]) => `<li><a href="${href}" ${id === active ? 'aria-current="page"' : ""}>${label}</a></li>`).join("")}</ul></nav></div>`;
+  }
+  function arenaActivityCards(progress) {
+    const sims = progress.simulations || {};
+    const challengeRecords = sims.decisionChallenges && typeof sims.decisionChallenges === "object" ? sims.decisionChallenges : {};
+    const challengeDone = DECISION_CHALLENGES.filter(item => challengeRecords[item.id] && challengeRecords[item.id].completed === true).length;
+    const lifeDone = Boolean(sims.lifeSimulator && Number.isFinite(Date.parse(sims.lifeSimulator.date)));
+    const items = [
+      { no: "01", href: "#/simulations", title: "Simulasi keuangan", text: "Anggaran, inflasi, target tabungan, biaya pinjaman, dan latihan mengenali penipuan dengan angka contoh.", mark: "◇", status: "Angka contoh, tanpa transaksi" },
+      { no: "02", href: "#/challenges", title: "Praktik keputusan", text: "Pilih tindakan pada situasi sehari-hari, lalu baca konsekuensi edukatifnya.", mark: challengeDone ? "✓" : "○", status: `${challengeDone} dari ${DECISION_CHALLENGES.length} tantangan dicoba` },
+      { no: "03", href: "#/finance-lab", title: "Finance Lab", text: "Kalkulator bunga, daya beli, target tabungan, dan pembagian anggaran bulanan.", mark: "◇", status: "Kalkulator edukatif" },
+      { no: "04", href: "#/life-simulator", title: "Life Simulator", text: "Atur uang virtual satu bulan, lalu hadapi satu kejadian tak terduga.", mark: lifeDone ? "✓" : "○", status: lifeDone ? "Sudah dicoba" : "Belum dicoba" }
+    ];
+    return items.map(item => `<a class="arena-activity-card" href="${item.href}"><span class="arena-activity-no" aria-hidden="true">${item.no}</span><h3>${item.title}</h3><p>${item.text}</p><span class="arena-activity-status"><span aria-hidden="true">${item.mark}</span>${escapeHtml(item.status)}</span><span class="arena-activity-go">Buka <span aria-hidden="true">→</span></span></a>`).join("");
+  }
   function shell(content, active) {
     const user = profile();
     const nav = user && user.role === "student"
@@ -572,8 +606,8 @@
           <nav class="nav nav-pills flex-column econova-primary-nav" aria-label="Navigasi utama">
             <a class="nav-link econova-nav-link primary-nav-link" href="#/dashboard" ${active === "dashboard" ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10 8.5-7 8.5 7v10.5h-6v-7h-5v7h-6z"/></svg><span>Beranda</span></a>
             <a class="nav-link econova-nav-link primary-nav-link" href="#/learn" ${["learn", "lesson", "curriculum", "literacy", "map"].includes(active) ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21zM4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8M8 10h6"/></svg><span>Belajar</span></a>
-            <a class="nav-link econova-nav-link primary-nav-link" href="#/quiz" ${active === "quiz" ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v12H9l-4 3zM8 9h.01M12 9h.01M16 9h.01M8 13h8"/></svg><span>Arena</span></a>
-            <a class="nav-link econova-nav-link primary-nav-link" href="#/insights" ${["insights", "progress"].includes(active) ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6.5 16v-4M11 16V6M15.5 16V9M20 16v-7"/></svg><span>Laporan</span></a>
+            <a class="nav-link econova-nav-link primary-nav-link" href="#/quiz" ${ARENA_PAGES.includes(active) ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v12H9l-4 3zM8 9h.01M12 9h.01M16 9h.01M8 13h8"/></svg><span>Arena</span></a>
+            <a class="nav-link econova-nav-link primary-nav-link" href="#/insights" ${REPORT_PAGES.includes(active) ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6.5 16v-4M11 16V6M15.5 16V9M20 16v-7"/></svg><span>Laporan</span></a>
             <a class="nav-link econova-nav-link primary-nav-link" href="#/profile" ${active === "profile" ? 'aria-current="page"' : ""}><svg class="primary-nav-icon econova-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span>Profil</span></a>
           </nav>
           ${active === "dashboard" ? `<div class="dashboard-sidebar-note"><span aria-hidden="true">↗</span><strong>Pahami uang. Pilih dengan sadar.</strong><small>Belajar sedikit demi sedikit, sesuai ritmemu.</small></div>` : ""}
@@ -582,7 +616,11 @@
     const actions = user
       ? `<div class="topbar-actions econova-header-actions">${user.role === "student" ? `<details class="nav-more econova-explore"><summary>Jelajah</summary><div class="nav-more-menu"><a href="#/simulations">Simulasi keuangan</a><a href="#/map">Peta belajar</a><a href="#/challenges">Praktik keputusan</a><a href="#/finance-lab">Finance Calculator Lab</a><a href="#/life-simulator">Simulator kehidupan</a><a href="#/progress">Progres belajar</a><a href="#/review">Ulangi materi</a><a href="#/achievements">Misi & pencapaian</a></div></details>` : ""}${renderAudioSettings()}<span class="small muted">${escapeHtml(user.name || "Admin demo")}</span><button class="button button-quiet" data-action="logout">Keluar</button></div>`
       : `<div class="topbar-actions">${renderAudioSettings()}<a class="button button-quiet" href="#/home#login">Masuk</a></div>`;
-    return `<div class="app-shell econova-shell${user && user.role === "student" ? " has-primary-nav" : ""}${active === "dashboard" ? " dashboard-shell" : ""}"><header class="topbar econova-header"><div class="topbar-inner econova-header-inner">${brand()}${actions}</div></header>${nav}<main id="main" class="page-scene scene-${active || "default"}">${content}</main><footer class="footer"><div class="footer-inner"><span>ECONOVA · Belajar keuangan, mulai dari hidupmu.</span><span>Materi edukasi, bukan saran investasi. Data progres tersimpan lokal di browser.</span></div></footer></div>`;
+    const subnav = user && user.role === "student"
+      ? REPORT_PAGES.includes(active) ? reportSubnav(active)
+        : ARENA_PAGES.includes(active) && !(active === "quiz" && quizState) ? arenaSubnav(active) : ""
+      : "";
+    return `<div class="app-shell econova-shell${user && user.role === "student" ? " has-primary-nav" : ""}${active === "dashboard" ? " dashboard-shell" : ""}"><header class="topbar econova-header"><div class="topbar-inner econova-header-inner">${brand()}${actions}</div></header>${nav}<main id="main" class="page-scene scene-${active || "default"}">${subnav}${content}</main><footer class="footer"><div class="footer-inner"><span>ECONOVA · Belajar keuangan, mulai dari hidupmu.</span><span>Materi edukasi, bukan saran investasi. Data progres tersimpan lokal di browser.</span></div></footer></div>`;
   }
   function loginView() {
     return `<div class="landing">
@@ -1157,7 +1195,13 @@
     const scoreSummary = latestScores.length
       ? `<div class="score-list">${latestScores.map(item => `<div class="score-row"><span>${escapeHtml(chapterTitle(item.chapter))} · ${new Date(item.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</span><strong>${item.correct}/${item.total} · ${item.percent}%</strong></div>`).join("")}</div>`
       : `<div class="empty-state">Belum ada nilai kuis yang tersimpan.</div>`;
-    return shell(`<div class="page-wrap"><span class="eyebrow">Personal Learning Intelligence</span><h1 class="feature-title">Perkembangan dari data nyata.</h1><p class="feature-lead lead">Ringkasan ini dihitung dari materi yang terselesaikan, nilai kuis, dan jawaban per topik yang tercatat di profil lokal.</p><section class="insight-track-grid" aria-label="Progres materi">${trackCards}</section><div class="insight-columns"><section class="surface insight-panel"><span class="eyebrow">HASIL KUIs · TOPIK</span><h2>Area yang kuat</h2><div class="insight-topic-list">${topicCards(strengths)}</div></section><section class="surface insight-panel"><span class="eyebrow">HASIL KUIs · TOPIK</span><h2>Area untuk dilatih</h2><div class="insight-topic-list">${topicCards(weaknesses)}</div></section></div><div class="insight-columns"><section class="surface insight-panel"><span class="eyebrow">NILAI TERBARU</span><h2>Riwayat kuis</h2>${scoreSummary}</section><section class="surface insight-panel"><span class="eyebrow">REKOMENDASI</span><h2>Langkah berikutnya</h2>${recommendation}</section></div><p class="notice" style="margin-top:20px">Insight hanya menggunakan data yang tersedia pada browser ini. Nilai tidak mengukur kemampuan secara menyeluruh dan tidak tersinkron ke perangkat lain.</p></div>`, "insights");
+    return shell(`<div class="page-wrap report-page report-insights">
+      <header class="report-page-head"><div><span class="eyebrow">PERSONAL LEARNING INSIGHTS</span><h1 class="feature-title">Perkembangan dari data nyata.</h1><p class="feature-lead lead">Ringkasan materi, nilai kuis, dan jawaban per topik yang tercatat di profil lokal.</p></div><a class="button button-secondary" href="#/progress">Lihat progres →</a></header>
+      <section class="report-section" aria-labelledby="insights-track-title"><div class="report-section-head"><div><span class="eyebrow">MATERI</span><h2 id="insights-track-title">Progres jalur belajar</h2></div></div><div class="insight-track-grid" aria-label="Progres materi">${trackCards}</div></section>
+      <div class="insight-columns report-panel-grid"><section class="surface insight-panel report-panel"><span class="eyebrow">HASIL KUIS · TOPIK</span><h2>Area yang kuat</h2><div class="insight-topic-list">${topicCards(strengths)}</div></section><section class="surface insight-panel report-panel"><span class="eyebrow">HASIL KUIS · TOPIK</span><h2>Area untuk dilatih</h2><div class="insight-topic-list">${topicCards(weaknesses)}</div></section></div>
+      <div class="insight-columns report-panel-grid"><section class="surface insight-panel report-panel"><span class="eyebrow">NILAI TERBARU</span><h2>Riwayat kuis</h2>${scoreSummary}</section><section class="surface insight-panel report-panel"><span class="eyebrow">REKOMENDASI</span><h2>Langkah berikutnya</h2>${recommendation}</section></div>
+      <p class="notice report-note">Insight hanya menggunakan data yang tersedia pada browser ini. Nilai tidak mengukur kemampuan secara menyeluruh dan tidak tersinkron ke perangkat lain.</p>
+    </div>`, "insights");
   }
   function handleFinanceCalculator(form) {
     const result = form.querySelector("[data-result]");
@@ -1379,26 +1423,61 @@
     else if (saved && earned) showToast(`Kuis selesai · +${earned} XP baru`);
   }
   function quizSetupView() {
+    const progress = progressFor(profile().id);
     const chapters = DATA.chapters.map(chapter => `<option value="${chapter.id}">${escapeHtml(chapter.title)}</option>`).join("");
     const firstChapter = DATA.chapters[0].id;
     const topics = [...new Set(QUESTION_BANK.filter(question => question.chapter === firstChapter).map(question => question.topic))].sort().map(topic => `<option value="${escapeHtml(topic)}">${escapeHtml(topic)}</option>`).join("");
-    return `<div class="page-wrap"><section class="surface quiz-panel"><span class="eyebrow">Arena kuis · ${QUESTION_BANK.length} soal tersedia</span><h1 style="font-size:38px;margin:11px 0">Latihan sesuai tujuanmu.</h1><p class="muted">Pilih bab, tingkat kesulitan, topik, atau campuran. Soal diacak tanpa pengulangan dalam satu sesi dan tidak ada hitung mundur.</p>
-      <form id="quiz-settings" class="quiz-settings">
-        <div class="field"><label for="quiz-mode">Mode</label><select id="quiz-mode" name="mode"><option value="chapter">Latihan per bab</option><option value="mixed">Campuran semua bab</option></select></div>
-        <div class="field"><label for="quiz-chapter">Bab</label><select id="quiz-chapter" name="chapter">${chapters}</select></div>
-        <div class="field"><label for="quiz-difficulty">Tingkat kesulitan</label><select id="quiz-difficulty" name="difficulty"><option value="all">Semua tingkat</option><option value="mudah">Mudah</option><option value="menengah">Menengah</option><option value="sulit">Sulit</option></select></div>
-        <div class="field"><label for="quiz-topic">Topik</label><select id="quiz-topic" name="topic"><option value="all">Semua topik</option>${topics}</select></div>
-        <div class="row"><button class="button button-primary" type="button" data-action="start-quiz">Mulai latihan <span aria-hidden="true">→</span></button><a class="button button-secondary" href="#/review">Ulangi soal yang perlu ditinjau</a></div>
-      </form>
-      <p class="notice" style="margin-top:18px">XP hanya diberikan satu kali per soal benar dan satu kali per kombinasi filter kuis. Skor kuis tidak sama dengan XP.</p>
-    </section></div>`;
+    const reviewCount = Object.keys(progress.reviewQuestions).length;
+    const latest = progress.quizScores.length ? progress.quizScores[progress.quizScores.length - 1] : null;
+    const latestCard = latest
+      ? `<div class="arena-last-score"><strong>${latest.percent}%</strong><span>${latest.correct} dari ${latest.total} jawaban benar</span></div><p class="arena-side-meta">${escapeHtml(chapterTitle(latest.chapter))} · ${new Date(latest.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</p><a class="text-link small" href="#/insights">Lihat riwayat di Laporan →</a>`
+      : `<div class="empty-state">Belum ada kuis yang diselesaikan. Mulai sesi pertamamu; hasilnya akan tampil di sini.</div>`;
+    const reviewCard = reviewCount
+      ? `<div class="arena-last-score"><strong>${reviewCount}</strong><span>soal bisa ditinjau ulang</span></div><a class="text-link small" href="#/review">Buka pusat review →</a>`
+      : `<div class="empty-state">Belum ada soal yang perlu ditinjau. Jawaban yang keliru akan muncul di sini sebagai bahan belajar.</div>`;
+    return `<div class="page-wrap arena-page">
+      <header class="arena-hero">
+        <div class="arena-hero-copy"><span class="eyebrow">Arena · Latihan kuis</span><h1>Latihan sesuai tujuanmu.</h1><p class="lead">Pilih bab, tingkat kesulitan, topik, atau campuran. Soal diacak tanpa pengulangan dalam satu sesi dan tidak ada hitung mundur.</p></div>
+        <dl class="arena-facts"><div><dt>Soal tersedia</dt><dd>${QUESTION_BANK.length}</dd></div><div><dt>Maks. per sesi</dt><dd>${QUIZ_SIZE}</dd></div><div><dt>Perlu ditinjau</dt><dd>${reviewCount}</dd></div></dl>
+      </header>
+      <div class="arena-layout">
+        <section class="surface arena-setup" aria-labelledby="arena-setup-title">
+          <span class="eyebrow">Atur sesi</span><h2 id="arena-setup-title">Mulai latihan kuis</h2>
+          <form id="quiz-settings" class="quiz-settings">
+            <div class="field"><label for="quiz-mode">Mode</label><select id="quiz-mode" name="mode"><option value="chapter">Latihan per bab</option><option value="mixed">Campuran semua bab</option></select></div>
+            <div class="field"><label for="quiz-chapter">Bab</label><select id="quiz-chapter" name="chapter">${chapters}</select></div>
+            <div class="field"><label for="quiz-difficulty">Tingkat kesulitan</label><select id="quiz-difficulty" name="difficulty"><option value="all">Semua tingkat</option><option value="mudah">Mudah</option><option value="menengah">Menengah</option><option value="sulit">Sulit</option></select></div>
+            <div class="field"><label for="quiz-topic">Topik</label><select id="quiz-topic" name="topic"><option value="all">Semua topik</option>${topics}</select></div>
+            <div class="row arena-setup-actions"><button class="button button-primary arena-start" type="button" data-action="start-quiz">Mulai latihan <span aria-hidden="true">→</span></button><a class="button button-secondary" href="#/review">Ulangi soal yang perlu ditinjau</a></div>
+          </form>
+          <p class="notice arena-setup-note">XP hanya diberikan satu kali per soal benar dan satu kali per kombinasi filter kuis. Skor kuis tidak sama dengan XP.</p>
+        </section>
+        <aside class="arena-side" aria-label="Ringkasan latihan">
+          <section class="surface arena-side-card"><span class="eyebrow">Hasil terakhir</span>${latestCard}</section>
+          <section class="surface arena-side-card"><span class="eyebrow">Perlu ditinjau</span>${reviewCard}</section>
+        </aside>
+      </div>
+      <section class="arena-activities" aria-labelledby="arena-activities-title">
+        <div class="section-heading"><div><span class="eyebrow">Aktivitas lain</span><h2 id="arena-activities-title">Lanjut berlatih di Arena</h2></div><p>Semua latihan berjalan di browser ini dengan angka contoh.</p></div>
+        <div class="arena-activity-grid">${arenaActivityCards(progress)}</div>
+      </section>
+    </div>`;
   }
   function quizView() {
     if (!quizState) return shell(quizSetupView(), "quiz");
     if (quizState.index >= quizState.questions.length) return quizResultView();
     const question = quizState.questions[quizState.index];
-    const feedback = quizState.checked ? `<div class="quiz-feedback ${quizState.selected === question.answer ? "good" : "bad"}" role="status"><strong>${quizState.selected === question.answer ? "Tepat!" : "Belum tepat — gunakan ini sebagai petunjuk belajar."}</strong><br>${escapeHtml(question.explanation)}<p class="small" style="margin:8px 0 0"><strong>Periksa pemahaman:</strong> ${escapeHtml(question.misconception)}<br><strong>Contoh:</strong> ${escapeHtml(question.example)}</p></div>` : "";
-    return shell(`<div class="page-wrap"><section class="surface quiz-panel"><div class="quiz-progress-row"><span>PERTANYAAN ${quizState.index + 1} DARI ${quizState.questions.length}</span><span>Benar: ${quizState.answers.filter(answer => answer.correct).length}</span></div><div class="lesson-progress" role="progressbar" aria-label="Progres kuis" aria-valuemin="0" aria-valuemax="${quizState.questions.length}" aria-valuenow="${quizState.index}"><span style="width:${Math.round((quizState.index / quizState.questions.length) * 100)}%"></span></div><p class="eyebrow">${escapeHtml(chapterTitle(question.chapter))} · ${escapeHtml(question.topic)} · ${escapeHtml(question.difficulty)}</p><h1>${escapeHtml(question.question)}</h1><div class="quiz-options">${question.options.map((option, i) => `<button class="choice ${quizState.checked && i === question.answer ? "correct" : ""} ${quizState.checked && i === quizState.selected && i !== question.answer ? "incorrect" : ""}" data-action="quiz-choice" data-index="${i}" aria-pressed="${quizState.selected === i}" ${quizState.checked ? "disabled" : ""}>${escapeHtml(option)}</button>`).join("")}</div>${feedback}<div class="row" style="justify-content:space-between"><button class="button button-quiet" data-action="quiz-exit">Akhiri latihan</button>${quizState.checked ? `<button class="button button-primary" data-action="quiz-next">${quizState.index === quizState.questions.length - 1 ? "Lihat hasil" : "Pertanyaan berikutnya"} →</button>` : `<button class="button button-primary" data-action="quiz-check" ${quizState.selected === null ? "disabled" : ""}>Periksa jawaban</button>`}</div></section></div>`, "quiz");
+    const isCorrect = quizState.selected === question.answer;
+    const feedback = quizState.checked ? `<div class="quiz-feedback ${isCorrect ? "good" : "bad"}" role="status"><p class="arena-feedback-title"><span class="arena-feedback-mark" aria-hidden="true">${isCorrect ? "✓" : "!"}</span><strong>${isCorrect ? "Tepat!" : "Belum tepat — gunakan ini sebagai petunjuk belajar."}</strong></p><p class="arena-feedback-body">${escapeHtml(question.explanation)}</p><p class="small arena-feedback-extra"><strong>Periksa pemahaman:</strong> ${escapeHtml(question.misconception)}<br><strong>Contoh:</strong> ${escapeHtml(question.example)}</p></div>` : "";
+    const letters = ["A", "B", "C", "D", "E", "F"];
+    const options = question.options.map((option, i) => {
+      const isAnswer = quizState.checked && i === question.answer;
+      const isWrongPick = quizState.checked && i === quizState.selected && i !== question.answer;
+      const stateLabel = isAnswer ? "Jawaban benar" : isWrongPick ? "Pilihanmu" : "";
+      return `<button class="choice arena-choice ${isAnswer ? "correct" : ""} ${isWrongPick ? "incorrect" : ""}" data-action="quiz-choice" data-index="${i}" aria-pressed="${quizState.selected === i}" ${quizState.checked ? "disabled" : ""}><span class="arena-choice-key" aria-hidden="true">${letters[i] || i + 1}</span><span class="arena-choice-text">${escapeHtml(option)}</span>${stateLabel ? `<span class="arena-choice-state">${stateLabel}</span>` : ""}</button>`;
+    }).join("");
+    const lastQuestion = quizState.index === quizState.questions.length - 1;
+    return shell(`<div class="page-wrap arena-page arena-play"><section class="surface quiz-panel arena-question"><div class="quiz-progress-row"><span>PERTANYAAN ${quizState.index + 1} DARI ${quizState.questions.length}</span><span>Benar: ${quizState.answers.filter(answer => answer.correct).length}</span></div><div class="lesson-progress" role="progressbar" aria-label="Progres kuis" aria-valuemin="0" aria-valuemax="${quizState.questions.length}" aria-valuenow="${quizState.index}"><span style="width:${Math.round((quizState.index / quizState.questions.length) * 100)}%"></span></div><p class="eyebrow arena-question-meta">${escapeHtml(chapterTitle(question.chapter))} · ${escapeHtml(question.topic)} · ${escapeHtml(question.difficulty)}</p><h1>${escapeHtml(question.question)}</h1><div class="quiz-options">${options}</div>${feedback}<div class="row arena-actions"><button class="button button-quiet" data-action="quiz-exit">Akhiri latihan</button>${quizState.checked ? `<button class="button button-primary" data-action="quiz-next">${lastQuestion ? "Lihat hasil" : "Pertanyaan berikutnya"} →</button>` : `<button class="button button-primary" data-action="quiz-check" ${quizState.selected === null ? "disabled" : ""}>Periksa jawaban</button>`}</div></section></div>`, "quiz");
   }
   function quizResultView() {
     const score = quizState.answers.filter(answer => answer.correct).length;
@@ -1413,7 +1492,7 @@
       ? `<a class="button button-primary" href="#/lesson/${next.id}">Lanjut belajar · ${escapeHtml(next.title)} →</a>`
       : `<a class="button button-primary" href="#/learn">Semua materi selesai · buka Learning Path</a>`;
     const newAchievements = (quizState.newAchievements || []).map(id => ACHIEVEMENTS.find(item => item.id === id)).filter(Boolean);
-    return shell(`<div class="page-wrap"><section class="surface quiz-panel"><span class="eyebrow">Kuis selesai · ${escapeHtml(quizState.filters.mode === "mixed" ? "Campuran" : chapterTitle(quizState.filters.chapter))}</span><h1 style="font-size:34px;margin:12px 0">Setiap jawaban jadi bekal.</h1><div class="result-score">${percent}%</div><p class="lead" style="font-size:16px">Kamu menjawab ${score} dari ${total} pertanyaan dengan benar.</p><div class="result-details"><div><strong>${score}/${total}</strong><span class="small muted">Nilai kuis</span></div><div><strong>${wrong.length}</strong><span class="small muted">Soal untuk ditinjau</span></div><div><strong>+${quizState.xpEarned}</strong><span class="small muted">XP baru (jika tersimpan)</span></div></div><section class="level-panel surface-soft quiz-level-summary" aria-label="Progres level"><div class="split"><div><span class="eyebrow">Level ${currentLevel.level} · ${escapeHtml(currentLevel.title)}</span><p class="muted small" style="margin:5px 0 0">${progress.xp} XP · ${currentLevel.remaining} XP menuju level berikutnya</p></div><strong class="level-number">${currentLevel.level}</strong></div><div class="lesson-progress" role="progressbar" aria-label="Progres level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${currentLevel.progress}"><span style="width:${currentLevel.progress}%"></span></div><div class="level-foot"><span>${currentLevel.progress}% menuju level berikutnya</span><span>${progress.completed.length}/${allLessons().length} materi selesai</span></div></section>${quizState.levelUp ? `<p class="completion-unlock" role="status">Level ${quizState.levelUp} terbuka · ${escapeHtml(levelInfo(progress.xp).title)}</p>` : ""}${newAchievements.length ? `<div class="completion-achievements"><span class="eyebrow">PENCAPAIAN BARU</span><div>${newAchievements.map(item => `<span class="achievement-chip">${item.icon} ${escapeHtml(item.name)}</span>`).join("")}</div></div>` : ""}<p class="muted">${percent >= 80 ? "Pemahamanmu terlihat kuat pada latihan ini. Penerapan konsep tetap bergantung pada situasi nyata." : "Satu sesi belum menggambarkan seluruh pemahamanmu. Gunakan pembahasan untuk memperkuat bagian tertentu."}</p>${!next ? `<div class="notice completion-finished" role="status">Seluruh materi yang tersedia telah ditandai selesai. Kamu dapat mengulang materi atau memilih jalur lain.</div>` : ""}<div class="section-heading" style="margin:25px 0 14px"><div><span class="eyebrow">Penguatan pemahaman</span><h2 style="font-size:22px">Soal yang bisa ditinjau</h2></div></div>${reviewList}<div class="row" style="margin-top:22px">${nextAction}<button class="button button-secondary" data-action="quiz-reset">Atur latihan baru</button><a class="button button-quiet" href="#/review">Buka pusat review</a><a class="button button-quiet" href="#/progress">Lihat progres</a></div></section></div>`, "quiz");
+    return shell(`<div class="page-wrap arena-page arena-play"><section class="surface quiz-panel arena-result"><span class="eyebrow">Kuis selesai · ${escapeHtml(quizState.filters.mode === "mixed" ? "Campuran" : chapterTitle(quizState.filters.chapter))}</span><div class="arena-result-head"><div><h1 class="arena-result-title">Setiap jawaban jadi bekal.</h1><p class="lead arena-result-lead">Kamu menjawab ${score} dari ${total} pertanyaan dengan benar.</p></div><div class="arena-score-card"><div class="result-score">${percent}%</div><span>Skor sesi</span></div></div><div class="result-details"><div><strong>${score}/${total}</strong><span class="small muted">Nilai kuis</span></div><div><strong>${wrong.length}</strong><span class="small muted">Soal untuk ditinjau</span></div><div><strong>+${quizState.xpEarned}</strong><span class="small muted">XP baru (jika tersimpan)</span></div></div><section class="level-panel surface-soft quiz-level-summary" aria-label="Progres level"><div class="split"><div><span class="eyebrow">Level ${currentLevel.level} · ${escapeHtml(currentLevel.title)}</span><p class="muted small arena-level-meta">${progress.xp} XP · ${currentLevel.remaining} XP menuju level berikutnya</p></div><strong class="level-number">${currentLevel.level}</strong></div><div class="lesson-progress" role="progressbar" aria-label="Progres level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${currentLevel.progress}"><span style="width:${currentLevel.progress}%"></span></div><div class="level-foot"><span>${currentLevel.progress}% menuju level berikutnya</span><span>${progress.completed.length}/${allLessons().length} materi selesai</span></div></section>${quizState.levelUp ? `<p class="completion-unlock" role="status">Level ${quizState.levelUp} terbuka · ${escapeHtml(levelInfo(progress.xp).title)}</p>` : ""}${newAchievements.length ? `<div class="completion-achievements"><span class="eyebrow">PENCAPAIAN BARU</span><div>${newAchievements.map(item => `<span class="achievement-chip">${item.icon} ${escapeHtml(item.name)}</span>`).join("")}</div></div>` : ""}<p class="muted">${percent >= 80 ? "Pemahamanmu terlihat kuat pada latihan ini. Penerapan konsep tetap bergantung pada situasi nyata." : "Satu sesi belum menggambarkan seluruh pemahamanmu. Gunakan pembahasan untuk memperkuat bagian tertentu."}</p>${!next ? `<div class="notice completion-finished" role="status">Seluruh materi yang tersedia telah ditandai selesai. Kamu dapat mengulang materi atau memilih jalur lain.</div>` : ""}<div class="section-heading arena-review-heading"><div><span class="eyebrow">Penguatan pemahaman</span><h2>Soal yang bisa ditinjau</h2></div></div>${reviewList}<div class="row arena-actions arena-result-actions">${nextAction}<button class="button button-secondary" data-action="quiz-reset">Atur latihan baru</button><a class="button button-quiet" href="#/review">Buka pusat review</a><a class="button button-quiet" href="#/progress">Lihat progres</a></div></section></div>`, "quiz");
   }
   function chapterTitle(id) {
     const chapter = DATA.chapters.find(item => item.id === id);
@@ -1433,12 +1512,16 @@
       return `<div class="surface progress-chapter"><span><strong>${escapeHtml(chapter.title)}</strong><span class="small muted" style="display:block">${done}/${chapter.lessons.length} materi</span></span><span class="small muted">${percent}%</span><div class="lesson-progress"><span style="width:${percent}%"></span></div></div>`;
     }).join("");
     const scores = progress.quizScores.length ? `<div class="score-list">${progress.quizScores.slice().reverse().slice(0, 5).map(item => `<div class="score-row"><span>${new Date(item.date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span><strong>${item.correct}/${item.total} · ${item.percent}%</strong></div>`).join("")}</div>` : `<div class="empty-state">Belum ada kuis yang diselesaikan. Coba kuis pertamamu kapan saja.</div>`;
-    return shell(`<div class="page-wrap"><span class="eyebrow">Ruang progres</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0 25px">Belajar dengan ritmemu.</h1><section class="level-panel surface-soft"><div class="split"><div><span class="eyebrow">Level ${level.level} · ${escapeHtml(level.title)}</span><p class="muted small" style="margin:5px 0 0">${progress.xp} XP terkumpul · ${level.remaining} XP menuju level berikutnya</p></div><strong class="level-number">${level.level}</strong></div><div class="lesson-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${level.progress}"><span style="width:${level.progress}%"></span></div><div class="level-foot"><span>${level.progress}% menuju level selanjutnya</span><span>Tidak ada XP berdasarkan kecepatan</span></div></section><section class="progress-grid" style="margin-top:16px"><div class="surface progress-stat"><span>Materi selesai</span><strong>${progress.completed.length}/${allLessons().length}</strong></div><div class="surface progress-stat"><span>Latihan perlu ditinjau</span><strong>${Object.keys(progress.reviewQuestions).length + Object.keys(progress.reviewLessons).length}</strong></div><div class="surface progress-stat"><span>Hari belajar tercatat</span><strong>${progress.studyDays.length}</strong></div></section><p class="notice" style="margin-top:16px"><strong>Aturan XP:</strong> materi, latihan benar, soal kuis, kuis pertama per filter, simulator per jenis, dan tantangan memberi reward terbatas; misi memberi XP harian/mingguan saat target aktivitas tercapai. Simulator kehidupan dan tiap challenge memberi bonus satu kali. Tidak ada reward berdasarkan kecepatan atau refresh.</p>
-      <div class="section-heading"><div><span class="eyebrow">Jejak materi</span><h2>Perjalanan per bab</h2></div></div><section class="progress-chapters">${chapterList}</section>
-      <div class="section-heading"><div><span class="eyebrow">Latihan pemahaman</span><h2>Hasil kuis terbaru</h2></div><a class="text-link small" href="#/review">Lihat materi review →</a></div><section class="surface pad">${scores}</section>
-      <div class="section-heading"><div><span class="eyebrow">Koleksi belajarmu</span><h2>Pencapaian</h2></div><a class="text-link small" href="#/achievements">Semua pencapaian →</a></div><section class="achievement-preview">${ACHIEVEMENTS.filter(item => item.check(progress)).map(item => `<span class="achievement-chip">${item.icon} ${escapeHtml(item.name)}</span>`).join("") || `<div class="empty-state">Pencapaian akan terbuka saat syarat belajarnya terpenuhi.</div>`}</section>
-      <section class="surface pad" style="margin-top:22px"><div class="split"><div><h3 style="margin-bottom:5px">Atur ulang progres</h3><p class="small muted" style="margin:0">Materi, XP, pencapaian, skor, hari belajar, dan riwayat review profil ini akan dihapus dari browser.</p></div><button class="button button-danger" data-action="reset-progress">Reset progres</button></div></section>
-      <p class="notice" style="margin-top:18px">XP, progres, dan pencapaian hanya tersimpan di browser ini dan dapat diubah melalui perangkat. Tidak ada data yang dikirim ke server atau tersinkron ke perangkat lain.</p>
+    return shell(`<div class="page-wrap report-page report-progress">
+      <header class="report-page-head"><div><span class="eyebrow">PROGRES BELAJAR</span><h1 class="feature-title">Belajar dengan ritmemu.</h1><p class="feature-lead lead">Jejak materi, latihan, dan hari belajar yang tercatat pada profil ini.</p></div><a class="button button-secondary" href="#/achievements">Lihat pencapaian →</a></header>
+      <section class="level-panel surface-soft report-level"><div class="split"><div><span class="eyebrow">LEVEL ${level.level} · ${escapeHtml(level.title)}</span><p class="muted small report-level-copy">${progress.xp} XP terkumpul · ${level.remaining} XP menuju level berikutnya</p></div><strong class="level-number">${level.level}</strong></div><div class="lesson-progress" role="progressbar" aria-label="Progres menuju level berikutnya" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${level.progress}"><span style="width:${level.progress}%"></span></div><div class="level-foot"><span>${level.progress}% menuju level selanjutnya</span><span>Tidak ada XP berdasarkan kecepatan</span></div></section>
+      <section class="progress-grid report-stat-grid" aria-label="Ringkasan progres"><div class="surface progress-stat"><span>Materi selesai</span><strong>${progress.completed.length}/${allLessons().length}</strong></div><div class="surface progress-stat"><span>Latihan perlu ditinjau</span><strong>${Object.keys(progress.reviewQuestions).length + Object.keys(progress.reviewLessons).length}</strong></div><div class="surface progress-stat"><span>Hari belajar tercatat</span><strong>${progress.studyDays.length}</strong></div></section>
+      <p class="notice report-note"><strong>Aturan XP:</strong> materi, latihan benar, soal kuis, kuis pertama per filter, simulator per jenis, dan tantangan memberi reward terbatas; misi memberi XP harian/mingguan saat target aktivitas tercapai. Simulator kehidupan dan tiap challenge memberi bonus satu kali. Tidak ada reward berdasarkan kecepatan atau refresh.</p>
+      <section class="report-section"><div class="report-section-head"><div><span class="eyebrow">JEJAK MATERI</span><h2>Perjalanan per bab</h2></div></div><section class="progress-chapters">${chapterList}</section></section>
+      <section class="report-section"><div class="report-section-head"><div><span class="eyebrow">LATIHAN PEMAHAMAN</span><h2>Hasil kuis terbaru</h2></div><a class="text-link small" href="#/review">Buka review →</a></div><section class="surface pad report-score-panel">${scores}</section></section>
+      <section class="report-section"><div class="report-section-head"><div><span class="eyebrow">KOLEKSI BELAJAR</span><h2>Pencapaian terbuka</h2></div><a class="text-link small" href="#/achievements">Semua pencapaian →</a></div><section class="achievement-preview">${ACHIEVEMENTS.filter(item => item.check(progress)).map(item => `<span class="achievement-chip">${item.icon} ${escapeHtml(item.name)}</span>`).join("") || `<div class="empty-state">Pencapaian akan terbuka saat syarat belajarnya terpenuhi.</div>`}</section></section>
+      <section class="surface pad report-reset-panel"><div class="split"><div><h3>Atur ulang progres</h3><p class="small muted">Materi, XP, pencapaian, skor, hari belajar, dan riwayat review profil ini akan dihapus dari browser.</p></div><button class="button button-danger" data-action="reset-progress">Reset progres</button></div></section>
+      <p class="notice report-note">XP, progres, dan pencapaian hanya tersimpan di browser ini dan dapat diubah melalui perangkat. Tidak ada data yang dikirim ke server atau tersinkron ke perangkat lain.</p>
     </div>`, "progress");
   }
   function achievementsView() {
@@ -1456,7 +1539,13 @@
     const weeklyCards = WEEKLY_MISSIONS.map(mission =>
       missionCardHtml(mission, missionProgress(progress, mission, "week", weeklyKey), `mission:weekly:${weeklyKey}:${mission.id}`, progress.rewardIds)
     ).join("");
-    return shell(`<div class="page-wrap"><span class="eyebrow">Daily Mission & Achievement Center</span><h1 class="feature-title">Rayakan langkah nyata.</h1><p class="feature-lead lead">Misi diperbarui berdasarkan aktivitas belajar yang tersimpan. Hadiah setiap misi hanya bisa diklaim sekali per hari atau pekan.</p><section class="mission-period"><div class="section-heading"><div><span class="eyebrow">HARI INI · ${dailyKey}</span><h2>Misi harian</h2></div><span class="mission-reward-note">Maks. 30 XP</span></div><div class="mission-grid">${dailyCards}</div></section><section class="mission-period"><div class="section-heading"><div><span class="eyebrow">PEKAN DIMULAI · ${weeklyKey}</span><h2>Misi mingguan</h2></div><span class="mission-reward-note">Maks. 70 XP</span></div><div class="mission-grid">${weeklyCards}</div></section><section class="section-heading"><div><span class="eyebrow">PENCAPAIAN</span><h2>Koleksi belajarmu</h2></div></section><section class="achievement-grid">${cards}</section><p class="notice" style="margin-top:20px">XP, misi, dan pencapaian tersimpan pada profil lokal browser ini. Misi dan badge bukan sertifikasi kemampuan.</p></div>`, "achievements");
+    return shell(`<div class="page-wrap report-page report-achievements">
+      <header class="report-page-head"><div><span class="eyebrow">MISI & PENCAPAIAN</span><h1 class="feature-title">Rayakan langkah nyata.</h1><p class="feature-lead lead">Misi mengikuti aktivitas belajar yang tercatat. Hadiah setiap misi hanya dapat diklaim sekali per periode.</p></div><a class="button button-secondary" href="#/progress">Kembali ke progres →</a></header>
+      <section class="report-section mission-period"><div class="report-section-head"><div><span class="eyebrow">HARI INI · ${dailyKey}</span><h2>Misi harian</h2></div><span class="mission-reward-note">Maks. 30 XP</span></div><div class="mission-grid">${dailyCards}</div></section>
+      <section class="report-section mission-period"><div class="report-section-head"><div><span class="eyebrow">PEKAN DIMULAI · ${weeklyKey}</span><h2>Misi mingguan</h2></div><span class="mission-reward-note">Maks. 70 XP</span></div><div class="mission-grid">${weeklyCards}</div></section>
+      <section class="report-section"><div class="report-section-head"><div><span class="eyebrow">KOLEKSI BELAJAR</span><h2>Pencapaian</h2></div></div><section class="achievement-grid">${cards}</section></section>
+      <p class="notice report-note">XP, misi, dan pencapaian tersimpan pada profil lokal browser ini. Misi dan badge bukan sertifikasi kemampuan.</p>
+    </div>`, "achievements");
   }
   function reviewView() {
     const progress = progressFor(profile().id);
@@ -1476,18 +1565,26 @@
     const combinedCards = questionCards + lessonReviewCards;
     const reviewContent = combinedCards || `<div class="empty-state">Belum ada soal yang ditandai untuk ditinjau. Jawaban yang keliru akan muncul di sini sebagai kesempatan belajar.</div>`;
     const lessonCards = unfinished.length ? unfinished.slice(0, 6).map(lesson => `<a class="review-lesson" href="#/lesson/${lesson.id}">${escapeHtml(lesson.title)} <span>→</span></a>`).join("") : `<div class="empty-state">Semua materi sudah ditandai selesai. Kamu dapat membukanya kembali kapan saja.</div>`;
-    return shell(`<div class="page-wrap"><span class="eyebrow">Penguatan pemahaman</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0">Materi yang bisa diulang.</h1><p class="lead" style="font-size:16px">Kesalahan satu kali bukan label kemampuan. Gunakan soal dan materi ini untuk memperkuat pemahaman dengan ritmemu.</p><div class="row" style="margin:21px 0"><button class="button button-danger" data-action="clear-review" ${combinedCards ? "" : "disabled"}>Hapus riwayat soal salah</button><a class="button button-secondary" href="#/quiz">Latihan kuis baru</a></div><section class="review-list">${reviewContent}</section><div class="section-heading"><div><span class="eyebrow">Perjalanan materi</span><h2>Materi belum selesai</h2></div></div><section class="review-lesson-list">${lessonCards}</section><p class="notice" style="margin-top:20px">Riwayat review tersimpan lokal pada browser ini. Menghapus progres dari halaman Progres akan menghapus semua hasil dan riwayat.</p></div>`, "review");
+    return shell(`<div class="page-wrap report-page report-review">
+      <header class="report-page-head"><div><span class="eyebrow">PENGUATAN PEMAHAMAN</span><h1 class="feature-title">Materi yang bisa diulang.</h1><p class="feature-lead lead">Kesalahan satu kali bukan label kemampuan. Gunakan soal dan materi ini untuk memperkuat pemahaman dengan ritmemu.</p></div><div class="report-header-actions"><a class="button button-secondary" href="#/quiz">Latihan kuis baru</a><button class="button button-danger" data-action="clear-review" ${combinedCards ? "" : "disabled"}>Hapus riwayat soal salah</button></div></header>
+      <section class="report-section"><div class="report-section-head"><div><span class="eyebrow">ULANGI PEMAHAMAN</span><h2>Soal dan latihan</h2></div></div><section class="review-list">${reviewContent}</section></section>
+      <section class="report-section"><div class="report-section-head"><div><span class="eyebrow">PERJALANAN MATERI</span><h2>Materi belum selesai</h2></div></div><section class="review-lesson-list">${lessonCards}</section></section>
+      <p class="notice report-note">Riwayat review tersimpan lokal pada browser ini. Menghapus progres dari halaman Progres akan menghapus semua hasil dan riwayat.</p>
+    </div>`, "review");
   }
   function adminView() {
-    const lessonRows = allLessons().map((lesson, i) => `<tr><td>${String(i + 1).padStart(2, "0")}</td><td>${escapeHtml(lesson.title)}</td><td>${escapeHtml(lesson.chapter.title)}</td><td>Aktif · demo</td></tr>`).join("");
+    const lessonRows = allLessons().map((lesson, i) => `<tr><td>${String(i + 1).padStart(2, "0")}</td><td>${escapeHtml(lesson.title)}</td><td>${escapeHtml(lesson.chapter.title)}</td><td><span class="admin-status">Aktif · demo</span></td></tr>`).join("");
     const questionRows = QUESTION_BANK.map((question, i) => `<tr><td>${String(i + 1).padStart(2, "0")}</td><td>${escapeHtml(question.question)}</td><td>${escapeHtml(question.topic)} · ${escapeHtml(question.difficulty)}</td></tr>`).join("");
-    return shell(`<div class="page-wrap"><div class="admin-banner"><div><span class="demo-label">ADMIN DEMO</span><h1 style="font-size:34px;margin:12px 0 5px">Pratinjau pengelolaan konten</h1><p class="small muted" style="margin:0">Contoh statis · bukan panel administrasi sungguhan</p></div><a class="button button-secondary" href="#/home">← Kembali</a></div>
-      <div class="section-heading"><div><span class="eyebrow">Ringkasan demo</span><h2>Konten yang tersedia</h2></div></div>
-      <section class="progress-grid"><div class="surface progress-stat"><span>Bab tersedia</span><strong>${DATA.chapters.length + PATHS.literacyChapters.length + PATHS.curriculum.length}</strong></div><div class="surface progress-stat"><span>Total materi</span><strong>${allLessons().length}</strong></div><div class="surface progress-stat"><span>Soal kuis</span><strong>${QUESTION_BANK.length}</strong></div></section>
-      <div class="section-heading"><div><span class="eyebrow">Perpustakaan</span><h2>Daftar materi</h2></div></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>No.</th><th>Materi</th><th>Bab</th><th>Status</th></tr></thead><tbody>${lessonRows}</tbody></table></div>
-      <div class="section-heading"><div><span class="eyebrow">Arena kuis</span><h2>Daftar soal</h2></div></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>No.</th><th>Pertanyaan</th><th>Format</th></tr></thead><tbody>${questionRows}</tbody></table></div>
-      <div class="section-heading"><div><span class="eyebrow">Privasi & batasan</span><h2>Progres siswa demo</h2></div></div><div class="surface pad"><div class="empty-state">Tidak ada data siswa yang ditampilkan. Profil dan progres belajar tersimpan di browser masing-masing pengguna, bukan di server admin.</div><p class="notice" style="margin:17px 0 0">Admin demo ini tidak mengubah konten dan tidak menyimpan perubahan. Pengelolaan sungguhan membutuhkan backend, kontrol akses, dan autentikasi terverifikasi.</p></div>
-    </div>`, "");
+    return shell(`<div class="page-wrap admin-page">
+      <header class="admin-banner admin-page-head"><div><span class="demo-label">ADMIN DEMO</span><h1>Pratinjau pengelolaan konten</h1><p>Ikhtisar konten yang tersedia di aplikasi. Data ini hanya untuk demo.</p></div><span class="admin-demo-status"><i aria-hidden="true"></i> Pratinjau lokal</span></header>
+      <nav class="admin-section-nav" aria-label="Bagian dashboard admin"><button type="button" data-admin-target="admin-overview" aria-controls="admin-overview">Ringkasan</button><button type="button" data-admin-target="admin-library" aria-controls="admin-library">Materi</button><button type="button" data-admin-target="admin-quiz" aria-controls="admin-quiz">Soal kuis</button><button type="button" data-admin-target="admin-privacy" aria-controls="admin-privacy">Batasan demo</button></nav>
+      <section class="report-section admin-overview" id="admin-overview" aria-labelledby="admin-overview-title"><div class="report-section-head"><div><span class="eyebrow">RINGKASAN DEMO</span><h2 id="admin-overview-title">Konten yang tersedia</h2></div></div>
+        <section class="progress-grid admin-stat-grid" aria-label="Jumlah konten"><div class="surface progress-stat admin-stat"><span>Bab tersedia</span><strong>${DATA.chapters.length + PATHS.literacyChapters.length + PATHS.curriculum.length}</strong></div><div class="surface progress-stat admin-stat"><span>Total materi</span><strong>${allLessons().length}</strong></div><div class="surface progress-stat admin-stat"><span>Soal kuis</span><strong>${QUESTION_BANK.length}</strong></div></section>
+      </section>
+      <section class="report-section admin-table-section" id="admin-library"><div class="report-section-head"><div><span class="eyebrow">PERPUSTAKAAN</span><h2>Daftar materi</h2></div><span class="admin-table-count">${allLessons().length} materi</span></div><div class="admin-table-wrap"><table class="admin-table"><caption>Materi dan status demo</caption><thead><tr><th scope="col">No.</th><th scope="col">Materi</th><th scope="col">Bab</th><th scope="col">Status</th></tr></thead><tbody>${lessonRows}</tbody></table></div></section>
+      <section class="report-section admin-table-section" id="admin-quiz"><div class="report-section-head"><div><span class="eyebrow">ARENA KUIS</span><h2>Daftar soal</h2></div><span class="admin-table-count">${QUESTION_BANK.length} soal</span></div><div class="admin-table-wrap"><table class="admin-table"><caption>Soal kuis dan topik</caption><thead><tr><th scope="col">No.</th><th scope="col">Pertanyaan</th><th scope="col">Format</th></tr></thead><tbody>${questionRows}</tbody></table></div></section>
+      <section class="report-section admin-limit-section" id="admin-privacy"><div class="report-section-head"><div><span class="eyebrow">PRIVASI & BATASAN</span><h2>Progres siswa demo</h2></div></div><div class="surface pad admin-limit-card"><div class="empty-state">Tidak ada data siswa yang ditampilkan. Profil dan progres belajar tersimpan di browser masing-masing pengguna, bukan di server admin.</div><p class="notice">Admin demo ini tidak mengubah konten dan tidak menyimpan perubahan. Pengelolaan sungguhan membutuhkan backend, kontrol akses, dan autentikasi terverifikasi.</p></div></section>
+    </div>`, "admin");
   }
   function mapView() {
     const progress = progressFor(profile().id);
@@ -1506,7 +1603,27 @@
   function profileView() {
     const user = profile();
     if (!user || user.role !== "student") return notFoundView();
-    return shell(`<div class="page-wrap narrow"><span class="eyebrow">Profil & pengaturan</span><h1 style="font-size:clamp(35px,5vw,48px);margin:10px 0">Ruang belajarmu.</h1><p class="lead" style="font-size:16px">Perbarui nama atau kelas yang ditampilkan. ID profil lokal tetap sama sehingga progres tidak berubah.</p><section class="surface pad"><form id="profile-form"><div class="field"><label for="profile-name">Nama lengkap</label><input id="profile-name" name="name" value="${escapeHtml(user.name)}" minlength="2" maxlength="80" required></div><div class="field"><label for="profile-class">Kelas atau peran</label><input id="profile-class" name="className" value="${escapeHtml(user.className)}" minlength="2" maxlength="40" required></div><p class="form-message" id="profile-error" role="alert"></p><button class="button button-primary" type="submit">Simpan profil</button></form></section><section class="surface pad" style="margin-top:18px"><span class="eyebrow">DATA & PRIVASI</span><h2 style="font-size:21px;margin:10px 0">Penyimpanan browser</h2><p>Profil dan progres hanya tersimpan pada browser/perangkat ini jika penyimpanan lokal tersedia. Identitas tidak diverifikasi, data tidak dikirim ke server, dan tidak tersinkron otomatis antarperangkat.</p><div class="row"><a class="button button-secondary" href="#/progress">Lihat progres</a><button class="button button-quiet" data-action="logout">Keluar dan ganti profil</button></div></section></div>`, "profile");
+    const progress = progressFor(user.id);
+    const level = levelInfo(progress.xp);
+    const unlocked = ACHIEVEMENTS.filter(item => item.check(progress));
+    const initials = user.name.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join("").toLocaleUpperCase("id-ID");
+    const achievementPreview = unlocked.length
+      ? unlocked.slice(0, 4).map(item => `<span class="achievement-chip">${item.icon} ${escapeHtml(item.name)}</span>`).join("")
+      : `<div class="empty-state profile-achievement-empty">Pencapaian akan muncul saat syarat belajar terpenuhi.</div>`;
+    return shell(`<div class="page-wrap profile-page">
+      <header class="profile-page-head"><div><span class="eyebrow">PROFIL & PENGATURAN</span><h1 class="feature-title">Ruang belajarmu.</h1><p class="feature-lead lead">Informasi profil dan progres yang tersimpan di perangkat ini.</p></div></header>
+      <section class="profile-identity surface" aria-label="Identitas pengguna"><span class="profile-avatar" aria-hidden="true">${escapeHtml(initials)}</span><div class="profile-identity-copy"><span class="eyebrow">PROFIL SISWA</span><h2>${escapeHtml(user.name)}</h2><p>${escapeHtml(user.className)}</p></div><div class="profile-level"><span>LEVEL ${level.level}</span><strong>${progress.xp} XP</strong><small>${escapeHtml(level.title)}</small></div></section>
+      <div class="profile-content-grid">
+        <div class="profile-main-column">
+          <section class="surface pad profile-section"><div class="report-section-head"><div><span class="eyebrow">INFORMASI PROFIL</span><h2>Perbarui identitas</h2></div></div><p class="profile-section-intro">ID profil lokal tetap sama sehingga progres belajar tidak berubah.</p><form id="profile-form" class="profile-form"><div class="field"><label for="profile-name">Nama lengkap</label><input id="profile-name" name="name" value="${escapeHtml(user.name)}" minlength="2" maxlength="80" required></div><div class="field"><label for="profile-class">Kelas atau peran</label><input id="profile-class" name="className" value="${escapeHtml(user.className)}" minlength="2" maxlength="40" required></div><p class="form-message" id="profile-error" role="alert"></p><button class="button button-primary" type="submit">Simpan profil</button></form></section>
+          <section class="surface pad profile-section"><div class="report-section-head"><div><span class="eyebrow">DATA & PRIVASI</span><h2>Penyimpanan browser</h2></div></div><p>Profil dan progres hanya tersimpan pada browser/perangkat ini jika penyimpanan lokal tersedia. Identitas tidak diverifikasi, data tidak dikirim ke server, dan tidak tersinkron otomatis antarperangkat.</p><div class="row profile-privacy-actions"><a class="button button-secondary" href="#/progress">Lihat progres</a><button class="button button-quiet" data-action="logout">Keluar dan ganti profil</button></div></section>
+        </div>
+        <aside class="profile-side-column">
+          <section class="surface pad profile-section profile-achievements"><div class="report-section-head"><div><span class="eyebrow">PENCAPAIAN</span><h2>Langkah yang terbuka</h2></div><a class="text-link small" href="#/achievements">Semua →</a></div><div class="achievement-preview">${achievementPreview}</div></section>
+          <section class="surface pad profile-section profile-settings"><div class="report-section-head"><div><span class="eyebrow">PENGATURAN</span><h2>Preferensi aplikasi</h2></div></div><p>Pengaturan audio tersedia melalui kontrol di bagian atas halaman. Preferensi ini hanya berlaku di browser saat ini.</p></section>
+        </aside>
+      </div>
+    </div>`, "profile");
   }
   function recordSimulation(progressOrKey, keyOrLabel, optionalLabel) {
     const suppliedProgress = progressOrKey && typeof progressOrKey === "object";
@@ -1632,7 +1749,7 @@
     if (matching.length > 60) document.getElementById("finder-count").textContent += " · menampilkan 60 hasil pertama";
   }
   function notFoundView() {
-    return shell(`<div class="page-wrap narrow"><div class="surface pad"><span class="eyebrow">Halaman tidak ditemukan</span><h1 style="font-size:36px;margin:12px 0">Sepertinya tautan ini belum tersedia.</h1><a class="button button-primary" href="#/dashboard">Kembali ke beranda</a></div></div>`, "");
+    return shell(`<div class="page-wrap narrow"><div class="surface pad"><span class="eyebrow">Halaman tidak ditemukan</span><h1 style="font-size:36px;margin:12px 0">Sepertinya tautan ini belum tersedia.</h1><a class="button button-primary" href="#/dashboard">Kembali ke beranda</a></div>    </div>`, "admin");
   }
   function render() {
     const current = route();
@@ -1669,6 +1786,11 @@
 
   ROOT.addEventListener("click", function (event) {
     audioUnlocked = true;
+    const adminTarget = event.target.closest("[data-admin-target]");
+    if (adminTarget) {
+      document.getElementById(adminTarget.dataset.adminTarget)?.scrollIntoView({ block: "start" });
+      return;
+    }
     const tab = event.target.closest("[role='tab']");
     if (tab) {
       currentStudentTab = tab.id === "tab-student";
